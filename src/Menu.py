@@ -1,10 +1,8 @@
-
-
 class Menu:
     def __init__(self):
         self.itemList = [] #list of items, Tuple Format (Item Name, Price)
 
-    def AddItem(self, itemName, price):
+    def add_item(self, itemName, price):
         try:
             self.itemList.append((str(itemName),float(price)))
             return True

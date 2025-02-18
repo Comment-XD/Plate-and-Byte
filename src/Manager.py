@@ -2,4 +2,4 @@ import Employee
 
 class Manager(Employee):
     def __inti__(self, name):
-        self.super(name, "Manager")
+        super().__init__(name)
