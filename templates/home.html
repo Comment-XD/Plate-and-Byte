@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<link rel="stylesheets" href="{{ url_for('static', filename='css/style.css')}}">
+
+<body>
+    <div class="container">
+
+        <h1>Byte and Plate</h1>
+
+        <div class="sidebar">
+            <div class="employee">
+                <button class="employee-pov">Employee</button>
+            </div>
+
+            <div class="manager">
+                <button class="employee-pov">Manager</button>
+            </div>
+        </div>
+
+        <!-- Seating portion -->
+        <div class="seating-grid">
+            {% for i in range(5) %}
+                {% for j in range(5) %}
+                    <div class="cell" id="Cell r-{{i}} c-{{j}}">Row: {{i}} Columns: {{j}}</div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/index.js')}}"></script>
+</body>
+
+</html>

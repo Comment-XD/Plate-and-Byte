@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<link rel="stylesheet" href="{{url_for('static', filename='css/login.css')}}">
+<body> 
+    <div class="login-container">
+        <h1>Plate and Byte</h1>
+        <!-- Do not forget to add a slogan and a logo -->
+        <!-- Elevating your restaurant to new heights -->
+
+        <form method="post">
+            {% if error %}
+                <p style="color: red;">{{ error }}</p>
+            {% endif %}
+            
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password">
+            <p>Need a Plate and Byte account?&nbsp;<u><a class="signup-link" href="{{url_for('signup')}}">Create an Account</a></u></p>
+            <button type="submit">Login</button>
+        </form>
+    </div> 
+</body>
+</html>
