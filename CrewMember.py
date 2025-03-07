@@ -1,5 +1,5 @@
-import Employee
+from Employee import Employee
 
 class CrewMember(Employee):
-    def __inti__(self, name, position):
-        self.super(name, position)
+    def __init__(self, name, position, ID, username, password):
+        self.super(name, position, ID, username, password)

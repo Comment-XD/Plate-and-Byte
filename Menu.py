@@ -12,3 +12,7 @@ class Menu:
             print("---Error in AddItem Method---")
             print("Inputs: \"" + str(itemName)+"\", " + str(price))
             return False
+"""    def GetItemNames(self):
+        temp = []
+        for item in self.itemList:
+            temp.append(item.)"""

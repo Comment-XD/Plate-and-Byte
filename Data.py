@@ -7,6 +7,5 @@ class Data:
         self.sales = [] #List of all past sales, Tuple Format (Item, Time)
         self.menu = Menu()
 
-    def AddSale(self,itemName,Time = datetime.now()):
-        if str(itemName) in
-        self.sales.append(str(itemName),str(Time))
+    def addSale(self,itemName,Time = datetime.now()):
+        pass
