@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plate and Byte | Restaurant Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <a href="#" class="logo">Plate & Byte</a>
+            <ul class="nav-links">
+                <li><a href="#">Home</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#contact">Contact</a></li>
+                <li><a href="/login" class="btn">Login</a></li>
+            </ul>
+        </nav>
+        
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Manage Your Restaurant with <span>Plate & Byte</span></h1>
+                <p>Streamline your restaurant operations with our intuitive management platform. From inventory to staff scheduling, we've got you covered.</p>
+                <a href="/signup" class="btn">Get Started</a>
+            </div>
+            <div class="hero-image">
+                <img src="https://images.unsplash.com/photo-1552566626-52f8b828add9?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80" alt="Restaurant Management">
+            </div>
+        </section>
+    </div>
+    
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-title">
+                <h2>Our <span>Features</span></h2>
+                <p>Everything you need to manage your restaurant efficiently</p>
+            </div>
+            <div class="feature-cards">
+                <div class="feature-card">
+                    <h3>Inventory Management</h3>
+                    <p>Keep track of your inventory in real-time. Get alerts when supplies are running low.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Staff Scheduling</h3>
+                    <p>Create and manage staff schedules with ease. Notify staff of changes automatically.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Menu Planning</h3>
+                    <p>Design and update your menu items, track popularity, and optimize pricing.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section class="about" id="about">
+        <div class="container">
+            <div class="section-title">
+                <h2>About <span>Plate & Byte</span></h2>
+            </div>
+            <div class="about-content">
+                <div class="about-text">
+                    <p>Plate & Byte was founded by restaurant industry veterans who understand the challenges of running a successful establishment. Our mission is to provide restaurant owners and managers with the tools they need to streamline operations, reduce costs, and improve customer satisfaction.</p>
+                    <p>With our intuitive platform, you can focus on what matters most - creating exceptional dining experiences for your customers.</p>
+                    <a href="#" class="btn">Learn More</a>
+                </div>
+                <div class="about-image">
+                    <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80" alt="About Plate & Byte">
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <footer id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">Plate & Byte</div>
+                <ul class="footer-links">
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Terms of Service</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                </ul>
+            </div>
+            <div class="copyright">
+                &copy; 2025 Plate & Byte. All rights reserved.
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

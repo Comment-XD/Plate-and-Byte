@@ -1,0 +1,71 @@
+h2 {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #333;
+    margin: 10px;
+    font-family: 'Poppins', sans-serif;
+}
+
+p {
+    font-family: 'Poppins', sans-serif;
+    font-size: small;
+    display: flex;
+    justify-content: left;
+    align-items: left;
+    color: grey;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f4f4f4;
+}
+.container {
+    background: white;
+    padding: 75px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.container {
+    background: white;
+    padding: 75px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.signup-link {
+    color: orangered;
+    font-weight: bold;
+}
+
+input {
+    display: block;
+    border-radius: 5px;
+    border: 1px solid;
+    box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+    width: 95%;
+    padding: 8px;
+    margin: 15px 0;
+}
+button {
+    border-radius: 10px;
+    background: #e6560e;
+    color: white;
+    padding: 10px;
+    margin-top: 10px;
+    box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+    border: none;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+}
+
+button:hover {
+    background-color:red;
+}
