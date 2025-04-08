@@ -1,12 +1,13 @@
-h1 {
-    font-size: 2.5rem;
+h2 {
+    font-size: 2rem;
     font-weight: bold;
     color: #333;
     margin: 10px;
+    font-family: 'Poppins', sans-serif;
 }
 
 p {
-    font-family: Verdana, Tahoma, sans-serif;
+    font-family: 'Poppins', sans-serif;
     font-size: small;
     display: flex;
     justify-content: left;
@@ -23,7 +24,15 @@ body {
     height: 100vh;
     background-color: #f4f4f4;
 }
-.login-container {
+.container {
+    background: white;
+    padding: 75px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.container {
     background: white;
     padding: 75px;
     border-radius: 10px;
@@ -54,6 +63,7 @@ button {
     box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
     border: none;
     cursor: pointer;
+    font-family: 'Poppins', sans-serif;
 }
 
 button:hover {

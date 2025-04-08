@@ -7,14 +7,26 @@ from flask import (
     url_for
 )
 
+from flask_login import (
+    LoginManager, 
+    login_required, 
+    login_user, 
+    logout_user, 
+    UserMixin
+)
+
 import pandas as pd
 import csv
 import os
 
-# from src.Restaurant import Restaurant
-# from src.Manager import Manager
-# from src.Employee import Employee
 USER_CSV_PATH = "data/users.csv"
+
+def check_role(username, password):
+    user_df = pd.read_csv(USER_CSV_PATH, index_col=0)
+    if ((user_df.username == username) & (user_df.password == int(password))).any(): 
+        return user_df.role
+    
+    return None
 
 def check_credential(username, password):
     user_df = pd.read_csv(USER_CSV_PATH, index_col=0)
@@ -43,16 +55,20 @@ def user_exists(username):
 
 
 app = Flask(__name__)
-    
+# --------- Home Page --------- #
+@app.route("/")
+def home():
+    return render_template("home.html")
+
 # --------Root Path----------- #
-@app.route("/", methods=["GET", "POST"])
+@app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
         
         if check_credential(username, password):
-            return redirect(url_for("home"))
+            return redirect(url_for("index"))
         
         else:
             return render_template("login.html", 
@@ -77,25 +93,9 @@ def signup():
     
     return render_template("signup.html")
 
-# ----------- Home Page ----------------- #
-@app.route("/home", methods=["GET", "POST"])
-def home():
-    return render_template("home.html")
-    
-# Route for adding tables to grid
-@app.route("/restaraunt", methods=["POST"])
-def set_restaurant_dim():
-    return
-
-# Route for adding tables to grid
-@app.route("/add_tables", methods=["POST"])
-def add_tables():
-    return
-
-# Route for the changing the pov of employee and manager
-@app.route("/pov", methods=["POST"])
-def change_pov():
-    return
+@app.route("/index")
+def index():
+    return render_template("index.html")
 
 
 if __name__ == "__main__":
