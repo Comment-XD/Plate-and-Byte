@@ -4,7 +4,7 @@ class Menu:
     def __init__(self):
         self.itemList = [] #list of items, Tuple Format (Item Name, Price)
 
-    def AddItem(self, itemName, price):
+    def addItem(self, itemName, price):
         try:
             self.itemList.append((str(itemName),float(price)))
             return True
@@ -12,7 +12,8 @@ class Menu:
             print("---Error in AddItem Method---")
             print("Inputs: \"" + str(itemName)+"\", " + str(price))
             return False
-"""    def GetItemNames(self):
-        temp = []
-        for item in self.itemList:
-            temp.append(item.)"""
+    def getItem(self,itemName):
+        for item in self.itemsList:
+            if item[0] == itemName:
+                return item
+        print("Not an Item")

@@ -5,16 +5,26 @@ from Busboy import Busboy
 from Waiter import Waiter
 from Cook import Cook
 from Employee import Employee
-
+from Data import Data
 
 class Restaurant:
-    def __init__(self, name, ID):
+    def __init__(self, name, ID, ActiveEmployee):
         self.name = name
         self.restaurantID = ID
         self.employees = [] #list of employees
         self.layout = Layout(self)
         self.staticID = 0
         self.IDs = []
+        self.activeEmployee = ActiveEmployee # this is the employee signed in
+        self.data = Data()
+        self.level3Access = ["Admin"]
+        self.level2Access = ["Admin", "Manager"]
+
+    ######Sets active employee
+    def setActiveEmployee(self, newActiveEmployee):
+        self.activeEmployee = newActiveEmployee
+    #####End Group
+
 
     ######Number Generating Method(s)
     def generteID(self):
@@ -26,19 +36,35 @@ class Restaurant:
 
     ######Adding Employee Methods
     def addCrewMember(self, name, role, username, password):
-        self.employees.append(CrewMember(name, role, self.generteID(), username, password))
+        if self.activeEmployee.role in self.level2Access:
+            self.employees.append(CrewMember(name, role, self.generteID(), username, password))
+        else:
+            print("Action canceled --- Privilege Level Error, must be level 2")
 
-    def addManager(self, name, role, username, password):
-        self.employees.append(Manager(name, self.generteID(), username, password))
+    def addManager(self, name, username, password):
+        if self.activeEmployee.role in self.level2Access:
+            self.employees.append(Manager(name, self.generteID(), username, password))
+        else:
+            print("Action canceled --- Privilege Level Error, must be level 3")
 
-    def addBusboy(self, name, role, username, password):
-        self.employees.append(Busboy(name, self.generteID(), username, password))
+    def addBusboy(self, name, username, password):
+        if self.activeEmployee.role in self.level2Access:
+            self.employees.append(Busboy(name, self.generteID(), username, password))
+        else:
+            print("Action canceled --- Privilege Level Error, must be level 2")
 
-    def addWaiter(self, name, role, username, password):
-        self.employees.append(Waiter(name, self.generteID(), username, password))
+    def addWaiter(self, name, username, password):
+        if self.activeEmployee.role in self.level2Access:
+            self.employees.append(Waiter(name, self.generteID(), username, password))
+        else:
+            print("Action canceled --- Privilege Level Error, must be level 2")
 
-    def addCook(self, name, role, username, password):
-        self.employees.append(Cook(name, self.generteID(), username, password))
+    def addCook(self, name, username, password):
+        if self.activeEmployee.role in self.level2Access:
+            self.employees.append(Cook(name, self.generteID(), username, password))
+        else:
+            print("Action canceled --- Privilege Level Error, must be level 2")
+
     #####End Group
 
     ######Searching Specific Employee Methods
@@ -100,6 +126,31 @@ class Restaurant:
                             temp.append(employee)
 
         return temp
+    #####End Group
+
+    ######General Getters
+    def getData(self):
+        return self.data
+
+    def getLayout(self):
+        return self.layout
+
+    def getName(self):
+        return self.name
+
+    def getRestaurantID(self):
+        return self.restaurantID
+
+    def getEmployees(self):
+        return self.employees
+
+    def getActiveEmployee(self):
+        return self.activeEmployee
+
+    def getIDs(self):
+        temp = []
+        for person in self.employees:
+            temp.append(person.ID)
     #####End Group
 
 

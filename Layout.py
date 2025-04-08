@@ -6,6 +6,7 @@ class Layout:
         self.sizeX = sizeX
         self.sizeY = sizeY
         self.map = []
+        self.parent = Parent
         for i in range(self.sizeY):
             temp = [None]*self.sizeX
             self.map.append(temp)
@@ -19,7 +20,7 @@ class Layout:
     endTile (x, y) - used for tables which take up more than one tile. Must share an x or y position.
     """
     def AddTable(self,startTile,endTile = None):
-        temp = Table()
+        temp = Table(self.parent.data)
         try:
             x = startTile[0]
             y = startTile[1]
