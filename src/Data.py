@@ -1,11 +1,20 @@
-from datetime import datetime
+from datetime import date
+from idlelib.mainmenu import menudefs
+
+from Sale import Sale
 import Menu
 
 class Data:
-    def __init__(self, customer_path):
-        self.sales = [] #List of all past sales, Tuple Format (Item, Time)
+    def __init__(self):
+        self.sales = [] #List of all past sales
         self.menu = Menu()
+        self.d = date()
 
-    def AddSale(self,itemName,Time = datetime.now()):
-        if str(itemName) not in self.sales:
-            self.sales.append(str(itemName),str(Time))
+    def addSale(self,order):
+        self.sales.append(Sale(order, self.d.ctime()))
+
+    def getMenu(self):
+        return self.menu
+
+    def getSales(self):
+        return self.sales

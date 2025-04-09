@@ -1,5 +1,5 @@
-import Employee
+from Employee import Employee
 
 class Manager(Employee):
-    def __inti__(self, name):
-        super().__init__(name)
+    def __init__(self, name, ID, username, password):
+        super(name, "Manager", ID, username, password)
