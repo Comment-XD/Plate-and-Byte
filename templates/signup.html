@@ -10,6 +10,7 @@
     <body>
         <div class="container">
             <a href="/" class="logo"><h2>Plate & Byte</h2></a>
+
             {% if error %}
                 <p style="color: red;">{{ error }}</p>
             {% endif %}
@@ -17,8 +18,10 @@
             <form method="post">
                 <input type="text" name="username" placeholder="Username" required>
                 <input type="password" name="password" placeholder="Password" required>
+        
+                <p>Already have a Plate and Byte account?&nbsp;<u><a class="signup-link" href="{{url_for('login')}}">Login</a></u></p>
+                <button type="submit">Sign Up</button>
             </form>
-            <p>Already have a Plate and Byte account?&nbsp;<u><a class="signup-link" href="{{url_for('login')}}">Login</a></u></p>
-            <button type="submit">Sign Up</button>
+        </div>
     </body>
 </html>

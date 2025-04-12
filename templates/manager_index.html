@@ -120,9 +120,8 @@
         <nav>
             <a href="#" class="logo">Plate & Byte</a>
             <ul class="nav-links">
-                <li><a href="#">Dashboard</a></li>
+                <li><a href="{{url_for('manager_employee_list')}}">Employees</a></li>
                 <li><a href="#">Menu</a></li>
-                <li><a href="#">Reservations</a></li>
                 <li><a href="#">Reports</a></li>
                 <li><a href="#">Settings</a></li>
             </ul>
@@ -132,10 +131,6 @@
         
         <div class="main-content">
             <div class="sidebar">
-                <h3>View Mode</h3>
-                <button class="employee-pov active">Employee View</button>
-                <button class="manager-pov">Manager View</button>
-                
                 <h3 style="margin-top: 25px;">Table Status</h3>
                 <div style="display: flex; align-items: center; margin: 10px 0;">
                     <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #4CAF50; margin-right: 10px;"></div>
@@ -164,12 +159,6 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-logo">Plate & Byte</div>
-                <ul class="footer-links">
-                    <li><a href="#">About</a></li>
-                    <li><a href="#">Contact</a></li>
-                    <li><a href="#">Privacy</a></li>
-                    <li><a href="#">Terms</a></li>
-                </ul>
             </div>
             <div class="copyright">
                 &copy; 2025 Plate & Byte. All rights reserved.

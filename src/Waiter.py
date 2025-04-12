@@ -1,4 +1,4 @@
-from CrewMember import CrewMember
+from src.CrewMember import CrewMember
 
 class Waiter(CrewMember):
     def __init__(self, name, ID, username, password):

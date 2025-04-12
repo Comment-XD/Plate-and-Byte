@@ -1,2 +1,4 @@
 id,username,password,role
-0,bchen,1234,employee
+1,bchen,1234,manager
+2,spain,1234,waiter
+3,sam,1111,waiter
