@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Employee</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/edit_employee.css') }}">
+</head>
+<body>
+
+    <!-- Navbar -->
+    <div class="navbar">
+        <a href="/static">Home</a>
+        <a href="/view_employees">View Employees</a>
+        <a href="/add_employee_web">Add Employee</a>
+    </div>
+
+    <!-- Form Container -->
+    <div class="form-container">
+        <h2>Edit Employee</h2>
+
+        <form method="POST" action="/employee/{{ employee['id'] }}/edit">
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" name="name" value="{{ employee['name'] }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" value="{{ employee['username'] }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="text" id="password" name="password" value="{{ employee['password'] }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="role">Role</label>
+                <select id="role" name="role" required>
+                    <option value="Manager" {% if employee['role'] == 'Manager' %}selected{% endif %}>Manager</option>
+                    <option value="Cook" {% if employee['role'] == 'Cook' %}selected{% endif %}>Cook</option>
+                    <option value="Waiter" {% if employee['role'] == 'Waiter' %}selected{% endif %}>Waiter</option>
+                </select>
+            </div>
+
+            <button type="submit" class="button">Save Changes</button>
+        </form>
+    </div>
+
+    <!-- Flash Auto Fade -->
+    <script>
+        setTimeout(function() {
+            var flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(function(flash) {
+                flash.style.opacity = '0';
+            });
+        }, 3000);
+    </script>
+
+</body>
+</html>
