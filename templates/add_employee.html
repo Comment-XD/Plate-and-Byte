@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add New Employee</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/add_employee.css') }}">
+</head>
+<body>
+    <div class="form-container">
+        <h2>Add New Employee</h2>
+        <form id="addEmployeeForm" method="POST" action="/add_employee_web">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" name="name" required>
+
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required>
+
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required>
+
+            <label for="role">Role</label>
+            <select id="role" name="role" required>
+                <option value="">Select a role</option>
+                <option value="Manager">Manager</option>
+                <option value="Cook">Cook</option>
+                <option value="Waiter">Waiter</option>
+            </select>
+
+            <button type="submit">Add Employee</button>
+        </form>
+    </div>
+</body>
+</html>
