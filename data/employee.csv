@@ -1,3 +1,7 @@
-
-
-Waiter,1,Barba Streisand,bstreisand4,PW123
+id,username,name,password,role
+1,bstreisand2,Barbra Streisand,staff123,Waiter
+2,gordonramsay,Gordon Ramsay,chefpass,Cook
+3,rachelgreen,Rachel Green,waitresslife,Waiterfgg,Waiter
+4,dddfgffgg,Not Provided Not Provided,12234546,Waiter
+5,ala2,Not Provided Not Provided,pw12344,Cook
+6,agoll,Alex Goll,Passoowrd123,Waiter

@@ -28,16 +28,14 @@ class Restaurant:
         employee_file_path = os.path.join('data', 'employee.csv')
         users_file_path = os.path.join('data', 'users.csv')
 
-        employee_fieldnames = ['id', 'username', 'name', 'password', 'role']  # Correct order for employee.csv
-        user_fieldnames = ['id', 'username', 'password', 'role']  # Correct order for users.csv
+        employee_fieldnames = ['id', 'username', 'name', 'password', 'role']
+        user_fieldnames = ['id', 'username', 'password', 'role']
 
         employee_file_exists = os.path.isfile(employee_file_path)
         users_file_exists = os.path.isfile(users_file_path)
 
-        # Prepare full name
-        first_name = getattr(employee, 'first_name', 'Not Provided')
-        last_name = getattr(employee, 'last_name', 'Not Provided')
-        full_name = f"{first_name} {last_name}".strip()
+        # ✅ Correct way to get full name now
+        full_name = employee.name
 
         # Write to employee.csv
         with open(employee_file_path, mode='a', newline='') as emp_csv:
@@ -49,6 +47,19 @@ class Restaurant:
                 'id': employee.id,
                 'username': employee.username,
                 'name': full_name,
+                'password': employee.password,
+                'role': employee.role
+            })
+
+        # Write to users.csv
+        with open(users_file_path, mode='a', newline='') as user_csv:
+            user_writer = csv.DictWriter(user_csv, fieldnames=user_fieldnames)
+            if not users_file_exists:
+                user_writer.writeheader()
+
+            user_writer.writerow({
+                'id': employee.id,
+                'username': employee.username,
                 'password': employee.password,
                 'role': employee.role
             })
@@ -109,22 +120,22 @@ class Restaurant:
         with open(employee_file_path, mode='r', newline='') as emp_csv:
             employee_reader = csv.DictReader(emp_csv)
             for row in employee_reader:
-                role = row['role']
                 emp_id = int(row['id'])
                 username = row['username']
                 password = row['password']
-                first_name = row['first name']
-                last_name = row['last name']
-                full_name = f"{first_name} {last_name}".strip()
+                name = row['name']
+                role = row['role']
 
+                # Recreate correct object based on role
                 if role == 'Manager':
-                    employee = Manager(full_name, emp_id, username, password)
+                    employee = Manager(name, emp_id, username, password)
                 elif role == 'Cook':
-                    employee = Cook(full_name, emp_id, username, password)
+                    employee = Cook(name, emp_id, username, password)
                 elif role == 'Waiter':
-                    employee = Waiter(full_name, emp_id, username, password)
-                elif role == 'Busboy':
-                    employee = Busboy(full_name, emp_id, username, password)
+                    employee = Waiter(name, emp_id, username, password)
+                else:
+                    # fallback if unknown role
+                    employee = CrewMember(name, emp_id, username, password, role)
 
                 self.employees.append(employee)
 

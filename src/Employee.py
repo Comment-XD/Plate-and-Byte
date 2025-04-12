@@ -3,14 +3,12 @@ import os
 from datetime import datetime
 
 class Employee:
-    def __init__(self, name, id, username, password, role="Employee"):
-        self.name = name
+    def __init__(self, id, username, password, name, role):
         self.id = id
         self.username = username
         self.password = password
+        self.name = name
         self.role = role
-        self.first_name, self.last_name = self.split_name(name)
-
 #Name Splitter
     def split_name(self, name):
         parts = name.split(" ", 1)
