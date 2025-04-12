@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Employee Detail</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/employee_detail.css') }}">
+</head>
+<body>
+
+    <!-- Success / Error Flash Message -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash-message {{ category }}">
+            <p>{{ message }}</p>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Main Employee Info -->
+    <div class="detail-container">
+        <h2>Employee Details</h2>
+        <p><strong>ID:</strong> {{ employee['id'] }}</p>
+        <p><strong>Username:</strong> {{ employee['username'] }}</p>
+        <p><strong>Name:</strong> {{ employee['name'] }}</p>
+        <p><strong>Role:</strong> {{ employee['role'] }}</p>
+
+        <div class="button-group">
+            <a href="/employee/{{ employee['id'] }}/edit" class="button">Edit</a>
+
+            <!-- Delete Button triggers Modal -->
+            <button type="button" onclick="openModal()" class="delete-button">Delete</button>
+        </div>
+
+        <a href="/view_employees" class="button">Back to List</a>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <h3>Confirm Deletion</h3>
+            <p>Are you sure you want to delete this employee?</p>
+            <div class="modal-buttons">
+                <form id="deleteForm" action="/employee/{{ employee['id'] }}/delete" method="POST" style="display:inline;">
+                    <button type="submit" class="button">Yes, Delete</button>
+                </form>
+                <button onclick="closeModal()" class="button cancel-button">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for Flash Fade and Modal -->
+    <script>
+        // Auto-fade success/error messages after 3 seconds
+        setTimeout(function() {
+            var flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(function(flash) {
+                flash.style.opacity = '0';
+            });
+        }, 3000);
+
+        // Modal control functions
+        function openModal() {
+            document.getElementById('confirmModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('confirmModal').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            var modal = document.getElementById('confirmModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
+
+</body>
+</html>

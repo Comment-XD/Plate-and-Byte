@@ -3,7 +3,8 @@ from flask import (
     render_template,
     request,
     redirect,
-    url_for
+    url_for,
+    get_flashed_messages, flash
 )
 
 import pandas as pd
@@ -51,6 +52,7 @@ def user_exists(username):
 app = Flask(__name__)
 restaurant = Restaurant()
 restaurant.load_employees_from_csv()
+app.secret_key = 'supersecretkey'  # Needed for flashing messages
 
 # --------- Home Page --------- #
 @app.route("/")
@@ -128,6 +130,114 @@ def add_employee_web():
         restaurant.write_employee_to_csvs(new_employee)
 
         return redirect('/add_employee_web')  # Redirect back after adding
+
+# Route to view all employees
+@app.route('/view_employees')
+def view_employees():
+    employee_file_path = os.path.join('data', 'employee.csv')
+
+    employees = []
+
+    if os.path.isfile(employee_file_path):
+        with open(employee_file_path, mode='r', newline='') as emp_csv:
+            employee_reader = csv.DictReader(emp_csv)
+            for row in employee_reader:
+                employees.append({
+                    'id': int(row['id']),
+                    'name': row['name']
+                })
+
+    # Sort employees by ID
+    employees = sorted(employees, key=lambda x: x['id'])
+
+    return render_template('view_employees.html', employees=employees)
+
+# Route to view one employee
+@app.route('/employee/<int:employee_id>')
+def view_employee(employee_id):
+    employee_file_path = os.path.join('data', 'employee.csv')
+
+    selected_employee = None
+
+    if os.path.isfile(employee_file_path):
+        with open(employee_file_path, mode='r', newline='') as emp_csv:
+            employee_reader = csv.DictReader(emp_csv)
+            for row in employee_reader:
+                if int(row['id']) == employee_id:
+                    selected_employee = row
+                    break
+
+    if not selected_employee:
+        flash('Employee not found.', 'error')
+        return redirect('/view_employees')
+
+    return render_template('employee_detail.html', employee=selected_employee)
+
+# Route to edit employee
+@app.route('/employee/<int:employee_id>/edit', methods=['GET', 'POST'])
+def edit_employee(employee_id):
+    employee_file_path = os.path.join('data', 'employee.csv')
+
+    employees = []
+
+    if os.path.isfile(employee_file_path):
+        with open(employee_file_path, mode='r', newline='') as emp_csv:
+            employee_reader = csv.DictReader(emp_csv)
+            employees = list(employee_reader)
+
+    employee_to_edit = None
+    for emp in employees:
+        if int(emp['id']) == employee_id:
+            employee_to_edit = emp
+            break
+
+    if not employee_to_edit:
+        flash('Employee not found.', 'error')
+        return redirect('/view_employees')
+
+    if request.method == 'POST':
+        employee_to_edit['name'] = request.form.get('name')
+        employee_to_edit['username'] = request.form.get('username')
+        employee_to_edit['password'] = request.form.get('password')
+        employee_to_edit['role'] = request.form.get('role')
+
+        # Save updated list
+        with open(employee_file_path, mode='w', newline='') as emp_csv:
+            fieldnames = ['id', 'username', 'name', 'password', 'role']
+            writer = csv.DictWriter(emp_csv, fieldnames=fieldnames)
+            writer.writeheader()
+            for emp in employees:
+                writer.writerow(emp)
+
+        flash('Employee updated successfully!', 'success')
+        return redirect(f'/employee/{employee_id}')
+
+    return render_template('edit_employee.html', employee=employee_to_edit)
+
+# Route to delete employee
+@app.route('/employee/<int:employee_id>/delete', methods=['POST'])
+def delete_employee(employee_id):
+    employee_file_path = os.path.join('data', 'employee.csv')
+
+    employees = []
+
+    if os.path.isfile(employee_file_path):
+        with open(employee_file_path, mode='r', newline='') as emp_csv:
+            employee_reader = csv.DictReader(emp_csv)
+            employees = list(employee_reader)
+
+    employees = [emp for emp in employees if int(emp['id']) != employee_id]
+
+    # Save updated list
+    with open(employee_file_path, mode='w', newline='') as emp_csv:
+        fieldnames = ['id', 'username', 'name', 'password', 'role']
+        writer = csv.DictWriter(emp_csv, fieldnames=fieldnames)
+        writer.writeheader()
+        for emp in employees:
+            writer.writerow(emp)
+
+    flash('Employee deleted successfully!', 'success')
+    return redirect('/view_employees')
 @app.route("/index")
 def index():
     return render_template("index.html")

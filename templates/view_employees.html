@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>View Employees</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/view_employees.css') }}">
+</head>
+<body>
+
+    <!-- Flash Messages (Success/Error) -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash-message {{ category }}">
+            <p>{{ message }}</p>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="table-container">
+        <h2>Employee List</h2>
+
+        <!-- Add New Employee Button -->
+        <a href="/add_employee_web" class="add-button">➕ Add New Employee</a>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for employee in employees %}
+                <tr onclick="window.location='/employee/{{ employee['id'] }}'">
+                    <td>{{ employee['id'] }}</td>
+                    <td>{{ employee['name'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Flash auto-fade script -->
+    <script>
+        setTimeout(function() {
+            var flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(function(flash) {
+                flash.style.opacity = '0';
+            });
+        }, 3000);
+    </script>
+
+</body>
+</html>
