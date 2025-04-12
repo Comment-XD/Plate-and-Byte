@@ -1,5 +1,7 @@
-from Employee import Employee
+from src.Employee import Employee
 
-class Manager(Employee):
-    def __init__(self, name, ID, username, password):
-        super(name, "Manager", ID, username, password)
+from src.CrewMember import CrewMember
+
+class Manager(CrewMember):
+    def __init__(self, name, id, username, password):
+        super().__init__(name, id, username, password, "Manager")

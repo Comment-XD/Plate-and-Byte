@@ -1,11 +1,10 @@
-from Layout import Layout
-from Manager import Manager
-from CrewMember import CrewMember
-from Busboy import Busboy
-from Waiter import Waiter
-from Cook import Cook
-from Employee import Employee
-from Data import Data
+from src.Manager import Manager
+from src.CrewMember import CrewMember
+from src.Busboy import Busboy
+from src.Waiter import Waiter
+from src.Cook import Cook
+from src.Employee import Employee
+from src.Data import Data
 
 import csv
 import os
@@ -14,7 +13,6 @@ import os
 class Restaurant:
     def __init__(self):
         self.employees = []
-        self.activeEmployee = None  # Assume login system will set this
         self.level2Access = ["Manager", "Admin"]
         self.level3Access = ["Admin"]
 
@@ -30,29 +28,32 @@ class Restaurant:
         employee_file_path = os.path.join('data', 'employee.csv')
         users_file_path = os.path.join('data', 'users.csv')
 
-        employee_fieldnames = ['id', 'username', 'password', 'first name', 'last name', 'role']
-        user_fieldnames = ['id', 'username', 'password', 'role']
+        employee_fieldnames = ['id', 'username', 'name', 'password', 'role']  # Correct order for employee.csv
+        user_fieldnames = ['id', 'username', 'password', 'role']  # Correct order for users.csv
 
         employee_file_exists = os.path.isfile(employee_file_path)
         users_file_exists = os.path.isfile(users_file_path)
 
+        # Prepare full name
+        first_name = getattr(employee, 'first_name', 'Not Provided')
+        last_name = getattr(employee, 'last_name', 'Not Provided')
+        full_name = f"{first_name} {last_name}".strip()
+
+        # Write to employee.csv
         with open(employee_file_path, mode='a', newline='') as emp_csv:
             employee_writer = csv.DictWriter(emp_csv, fieldnames=employee_fieldnames)
             if not employee_file_exists:
                 employee_writer.writeheader()
 
-            first_name = getattr(employee, 'first_name', 'Not Provided')
-            last_name = getattr(employee, 'last_name', 'Not Provided')
-
             employee_writer.writerow({
                 'id': employee.id,
                 'username': employee.username,
+                'name': full_name,
                 'password': employee.password,
-                'first name': first_name,
-                'last name': last_name,
                 'role': employee.role
             })
 
+        # Write to users.csv
         with open(users_file_path, mode='a', newline='') as user_csv:
             user_writer = csv.DictWriter(user_csv, fieldnames=user_fieldnames)
             if not users_file_exists:

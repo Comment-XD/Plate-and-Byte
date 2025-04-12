@@ -1,8 +1,8 @@
 from datetime import date
 from idlelib.mainmenu import menudefs
 
-from Sale import Sale
-import Menu
+from src.Sale import Sale
+from src.Menu import Menu
 
 class Data:
     def __init__(self):
