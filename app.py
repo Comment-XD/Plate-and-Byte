@@ -251,6 +251,20 @@ def delete_employee(employee_id):
 
     flash('Employee deleted successfully!', 'success')
     return redirect('/view_employees')
+
+@app.route("/manager")
+def manager():
+    return render_template("manager_index.html")
+
+@app.route("/cook")
+def cook():
+    return render_template("cook_index.html")
+
+@app.route("/waiter")
+def waiter():
+    return render_template("waiter_index.html")
+
+
 @app.route("/index")
 def index():
     return render_template("index.html")
