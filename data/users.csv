@@ -1,4 +1,7 @@
 id,username,password,role
-1,bchen,1234,manager
-2,spain,1234,waiter
-3,sam,1111,waiter
+0,bchen,1234,employee
+4,dddfgffgg,12234546,Waiter
+5,ala2,pw12344,Cook
+6,Bsummrs,Password trest,Cook
+6,agoll,Passoowrd123,Waiter
+6,agoll,Passoowrd123,Waiter
