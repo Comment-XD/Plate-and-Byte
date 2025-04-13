@@ -2,32 +2,73 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Add New Employee</title>
+    <title>Add New Employee | Plate & Byte</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/add_employee.css') }}">
 </head>
 <body>
-    <div class="form-container">
-        <h2>Add New Employee</h2>
-        <form id="addEmployeeForm" method="POST" action="/add_employee_web">
-            <label for="name">Full Name</label>
-            <input type="text" id="name" name="name" required>
+    <div class="container">
+        <nav>
+            <a href="/" class="logo">Plate & Byte</a>
+            <ul class="nav-links">
+                <li><a href="{{url_for('manager')}}">Dashboard</a></li>
+                <li><a href="/view_employees">Employees</a></li>
+                <li><a href="#">Menu</a></li>
+                <li><a href="#">Reports</a></li>
+            </ul>
+        </nav>
 
-            <label for="username">Username</label>
-            <input type="text" id="username" name="username" required>
+        <div class="content-wrapper">
+            <div class="form-container">
+                <h2 class="page-title">Add New <span>Employee</span></h2>
+                
+                <form id="addEmployeeForm" method="POST" action="/add_employee_web">
+                    <div class="form-group">
+                        <label for="name">Full Name</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
 
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password" required>
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
 
-            <label for="role">Role</label>
-            <select id="role" name="role" required>
-                <option value="">Select a role</option>
-                <option value="Manager">Manager</option>
-                <option value="Cook">Cook</option>
-                <option value="Waiter">Waiter</option>
-            </select>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
 
-            <button type="submit">Add Employee</button>
-        </form>
+                    <div class="form-group">
+                        <label for="role">Role</label>
+                        <select id="role" name="role" required>
+                            <option value="">Select a role</option>
+                            <option value="Manager">Manager</option>
+                            <option value="Cook">Cook</option>
+                            <option value="Waiter">Waiter</option>
+                        </select>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn">Add Employee</button>
+                        <a href="/view_employees" class="btn secondary-btn">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <footer>
+            <div class="footer-content">
+                <div class="footer-logo">Plate & Byte</div>
+                <ul class="footer-links">
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Terms of Service</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                </ul>
+            </div>
+            <div class="copyright">
+                &copy; 2025 Plate & Byte. All rights reserved.
+            </div>
+        </footer>
     </div>
 </body>
 </html>

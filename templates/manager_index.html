@@ -75,9 +75,16 @@
             z-index: 1; /* Bring hovered cell to front */
         }
         
+        .cell.available {
+            background-color: #e8f5e9;
+        }
+        
         .cell.occupied {
-            background-color: #ffebe5;
-            border: 1px solid var(--primary-color);
+            background-color: #fff8e1;
+        }
+        
+        .cell.dirty {
+            background-color: #ffebee;
         }
         
         .status-indicator {
@@ -87,11 +94,15 @@
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            background-color: #4CAF50;
+            background-color: #4CAF50; /* Green for available */
         }
         
         .status-indicator.occupied {
-            background-color: var(--primary-color);
+            background-color: #FFC107; /* Yellow for occupied */
+        }
+        
+        .status-indicator.dirty {
+            background-color: #F44336; /* Red for dirty */
         }
         
         .page-title {
@@ -111,6 +122,109 @@
         
         p {
             margin-bottom: 5px; /* Reduce paragraph spacing */
+        }
+        
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 400px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover {
+            color: black;
+        }
+        
+        .modal-body {
+            margin-bottom: 20px;
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .modal-footer button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .modal-footer button.primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .modal-footer button.secondary {
+            background-color: #e0e0e0;
+        }
+        
+        .waiter-info {
+            font-size: 0.8rem;
+            margin-top: 5px;
+            font-style: italic;
+            color: #666;
+        }
+        
+        .status-options {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .status-option {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+        
+        .status-circle {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+        }
+        
+        .status-circle.available {
+            background-color: #4CAF50;
+        }
+        
+        .status-circle.occupied {
+            background-color: #FFC107;
+        }
+        
+        .status-circle.dirty {
+            background-color: #F44336;
         }
     </style>
 </head>
@@ -137,20 +251,66 @@
                     <span>Available</span>
                 </div>
                 <div style="display: flex; align-items: center; margin: 10px 0;">
-                    <div style="width: 12px; height: 12px; border-radius: 50%; background-color: var(--primary-color); margin-right: 10px;"></div>
+                    <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #FFC107; margin-right: 10px;"></div>
                     <span>Occupied</span>
                 </div>
+                <div style="display: flex; align-items: center; margin: 10px 0;">
+                    <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #F44336; margin-right: 10px;"></div>
+                    <span>Dirty</span>
+                </div>
+                <p style="margin-top: 20px; font-size: 0.9rem;">Double-click on a table to assign a waiter and change status</p>
             </div>
 
             <div class="seating-grid">
                 {% for i in range(5) %}
                     {% for j in range(5) %}
-                        <div class="cell" id="cell-r{{i}}-c{{j}}" onclick="toggleTableStatus(this)">
+                        <div class="cell available" id="table-{{ i*5 + j + 1 }}" data-table-id="{{ i*5 + j + 1 }}" onclick="handleTableClick(this)" ondblclick="openTableModal(this)">
                             <div class="status-indicator"></div>
                             <p>Table #{{ i*5 + j + 1 }}</p>
+                            <div class="waiter-info" id="waiter-info-{{ i*5 + j + 1 }}"></div>
                         </div>
                     {% endfor %}
                 {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Table Management Modal -->
+    <div id="tableModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTableTitle">Table #1</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <h4>Change Status</h4>
+                <div class="status-options">
+                    <label class="status-option">
+                        <input type="radio" name="tableStatus" value="available" checked>
+                        <div class="status-circle available"></div>
+                        <span>Available</span>
+                    </label>
+                    <label class="status-option">
+                        <input type="radio" name="tableStatus" value="occupied">
+                        <div class="status-circle occupied"></div>
+                        <span>Occupied</span>
+                    </label>
+                    <label class="status-option">
+                        <input type="radio" name="tableStatus" value="dirty">
+                        <div class="status-circle dirty"></div>
+                        <span>Dirty</span>
+                    </label>
+                </div>
+                
+                <h4>Assign Waiter</h4>
+                <select id="waiterSelect" style="width: 100%; padding: 8px; margin-top: 5px; border-radius: 4px; border: 1px solid #ddd;">
+                    <option value="">Select a waiter</option>
+                    <!-- Waiters will be loaded here -->
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary" onclick="closeModal()">Cancel</button>
+                <button class="primary" onclick="saveTableChanges()">Save Changes</button>
             </div>
         </div>
     </div>
@@ -167,21 +327,149 @@
     </footer>
     
     <script>
-        function toggleTableStatus(element) {
-            element.classList.toggle('occupied');
-            const statusIndicator = element.querySelector('.status-indicator');
-            statusIndicator.classList.toggle('occupied');
+        // Store table data
+        const tableData = {};
+        let currentTableId = null;
+        const modal = document.getElementById('tableModal');
+        const modalTitle = document.getElementById('modalTableTitle');
+        const waiterSelect = document.getElementById('waiterSelect');
+        
+        // Close modal when clicking on X
+        document.querySelector('.close').addEventListener('click', closeModal);
+        
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+        
+        // Load waiters when the page loads
+        document.addEventListener('DOMContentLoaded', loadWaiters);
+        
+        function loadWaiters() {
+            fetch('/api/waiters')
+                .then(response => response.json())
+                .then(data => {
+                    waiterSelect.innerHTML = '<option value="">Select a waiter</option>';
+                    data.forEach(waiter => {
+                        const option = document.createElement('option');
+                        // Use the username as the value, but store the ID as a data attribute
+                        option.value = waiter.username;
+                        option.textContent = waiter.name;
+                        option.dataset.waiterId = waiter.id;
+                        waiterSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error loading waiters:', error));
         }
         
-        document.querySelector('.employee-pov').addEventListener('click', function() {
-            this.classList.add('active');
-            document.querySelector('.manager-pov').classList.remove('active');
-        });
+        function handleTableClick(element) {
+            // Single click functionality if needed
+        }
         
-        document.querySelector('.manager-pov').addEventListener('click', function() {
-            this.classList.add('active');
-            document.querySelector('.employee-pov').classList.remove('active');
+        function openTableModal(element) {
+            const tableId = element.dataset.tableId;
+            currentTableId = tableId;
+            modalTitle.textContent = `Table #${tableId}`;
+            
+            // Set current status in modal
+            const currentStatus = element.classList.contains('occupied') ? 'occupied' : 
+                                 element.classList.contains('dirty') ? 'dirty' : 'available';
+            
+            document.querySelector(`input[name="tableStatus"][value="${currentStatus}"]`).checked = true;
+            
+            // Set current waiter in modal if assigned
+            if (tableData[tableId] && tableData[tableId].waiter) {
+                waiterSelect.value = tableData[tableId].waiter;
+            } else {
+                waiterSelect.value = "";
+            }
+            
+            modal.style.display = 'block';
+        }
+        
+        function closeModal() {
+            modal.style.display = 'none';
+            currentTableId = null;
+        }
+        
+        function saveTableChanges() {
+            if (!currentTableId) return;
+            
+            // Get the table element and its components
+            const tableElement = document.getElementById(`table-${currentTableId}`);
+            const statusIndicator = tableElement.querySelector('.status-indicator');
+            const waiterInfoElement = document.getElementById(`waiter-info-${currentTableId}`);
+            
+            // Get selected status from radio buttons
+            const selectedStatus = document.querySelector('input[name="tableStatus"]:checked').value;
+            
+            // Get selected waiter from dropdown
+            const selectedWaiter = waiterSelect.value;
+            const selectedWaiterName = selectedWaiter ? waiterSelect.options[waiterSelect.selectedIndex].text : '';
+            
+            // Get the waiter ID from the data attribute in the option element
+            const selectedWaiterId = selectedWaiter ? 
+                waiterSelect.options[waiterSelect.selectedIndex].dataset.waiterId : '';
+            
+            // Update local table data cache
+            tableData[currentTableId] = {
+                status: selectedStatus,
+                waiter: selectedWaiter,
+                waiterName: selectedWaiterName,
+                waiterId: selectedWaiterId
+            };
+            
+            // Update visual appearance of the table
+            tableElement.className = 'cell ' + selectedStatus;
+            statusIndicator.className = 'status-indicator ' + selectedStatus;
+            
+            // Update waiter info display
+            if (selectedWaiter) {
+                waiterInfoElement.textContent = `Waiter: ${selectedWaiterName}`;
+            } else {
+                waiterInfoElement.textContent = '';
+            }
+            
+            // Send update to server via API call
+            fetch('/api/update_table', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    table_id: currentTableId,
+                    status: selectedStatus,
+                    waiter_id: selectedWaiterId
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+            
+            // Close the modal
+            closeModal();
+        }
+        
+        // Initialize all tables
+        document.addEventListener('DOMContentLoaded', function() {
+            const tables = document.querySelectorAll('.cell');
+            tables.forEach(table => {
+                const tableId = table.dataset.tableId;
+                tableData[tableId] = {
+                    status: 'available',
+                    waiter: '',
+                    waiterName: '',
+                    waiterId: ''
+                };
+            });
         });
     </script>
+    
 </body>
 </html>

@@ -4,7 +4,9 @@ from flask import (
     request,
     redirect,
     url_for,
-    get_flashed_messages, flash
+    get_flashed_messages, 
+    flash,
+    jsonify
 )
 
 import pandas as pd
@@ -251,6 +253,102 @@ def delete_employee(employee_id):
 
     flash('Employee deleted successfully!', 'success')
     return redirect('/view_employees')
+
+@app.route('/api/update_table', methods=['POST'])
+def update_table():
+    # Get data from the request
+    data = request.json
+    table_id = data.get('table_id')
+    status = data.get('status')
+    waiter_id = data.get('waiter_id', '')
+    
+    # Validate required fields
+    if not table_id or not status:
+        return jsonify({'success': False, 'message': 'Missing required fields'}), 400
+    
+    # Map frontend status names to database status names
+    status_mapping = {
+        'available': 'Available',
+        'occupied': 'Occupied',
+        'dirty': 'Dirty'
+    }
+    
+    # Convert status to the format used in CSV
+    csv_status = status_mapping.get(status, 'Available')
+    
+    # Read the current tables data
+    tables = []
+    try:
+        with open('data/tables.csv', 'r') as file:
+            reader = csv.DictReader(file)
+            tables = list(reader)
+    except Exception as e:
+        print(f"Error reading tables.csv: {e}")
+        return jsonify({'success': False, 'message': 'Error reading tables data'}), 500
+    
+    # Find and update the specific table
+    table_found = False
+    for table in tables:
+        if table['table_id'] == str(table_id):
+            table['status'] = csv_status
+            table['waiter_id'] = waiter_id
+            table_found = True
+            break
+    
+    if not table_found:
+        return jsonify({'success': False, 'message': 'Table not found'}), 404
+    
+    # Write the updated data back to the CSV
+    try:
+        with open('data/tables.csv', 'w', newline='') as file:
+            fieldnames = ['table_id', 'status', 'waiter_id']
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(tables)
+    except Exception as e:
+        print(f"Error writing to tables.csv: {e}")
+        return jsonify({'success': False, 'message': 'Error updating tables data'}), 500
+    
+    return jsonify({'success': True})
+
+# Add this route to your app.py file
+@app.route('/api/waiters', methods=['GET'])
+def get_waiters():
+    waiters = []
+    try:
+        with open('data/waiters.csv', 'r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                waiters.append({
+                    'id': row.get('id', ''),
+                    'username': row.get('username', ''),
+                    'name': row.get('name', '')
+                })
+    except Exception as e:
+        print(f"Error reading waiters.csv: {e}")
+        # If file doesn't exist or is empty, return empty list
+        pass
+    
+    return jsonify(waiters)
+
+@app.route('/api/tables', methods=['GET'])
+def get_tables():
+    tables = []
+    try:
+        with open('data/tables.csv', 'r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                tables.append({
+                    'table_id': row.get('table_id', ''),
+                    'status': row.get('status', 'Available'),
+                    'waiter_id': row.get('waiter_id', '')
+                })
+    except Exception as e:
+        print(f"Error reading tables.csv: {e}")
+        # If file doesn't exist or is empty, return empty list
+        pass
+    
+    return jsonify(tables)
 
 @app.route("/manager")
 def manager():
