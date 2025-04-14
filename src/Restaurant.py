@@ -3,8 +3,6 @@ from src.CrewMember import CrewMember
 from src.Busboy import Busboy
 from src.Waiter import Waiter
 from src.Cook import Cook
-from src.Employee import Employee
-from src.Data import Data
 
 import csv
 import os
@@ -27,9 +25,13 @@ class Restaurant:
 
         employee_file_path = os.path.join('data', 'employee.csv')
         users_file_path = os.path.join('data', 'users.csv')
+        manager_file_path = os.path.join('data', 'managers.csv')
+        waiter_file_path = os.path.join('data', 'waiters.csv')
 
         employee_fieldnames = ['id', 'username', 'name', 'password', 'role']
         user_fieldnames = ['id', 'username', 'password', 'role']
+        manager_fieldnames = ['id', 'username', 'name', 'password']
+        waiter_fieldnames = ['id', 'username', 'name', 'password']
 
         employee_file_exists = os.path.isfile(employee_file_path)
         users_file_exists = os.path.isfile(users_file_path)
@@ -50,7 +52,8 @@ class Restaurant:
                 'password': employee.password,
                 'role': employee.role
             })
-
+            
+        
         # Write to users.csv
         with open(users_file_path, mode='a', newline='') as user_csv:
             user_writer = csv.DictWriter(user_csv, fieldnames=user_fieldnames)
@@ -63,19 +66,49 @@ class Restaurant:
                 'password': employee.password,
                 'role': employee.role
             })
+        
+        # Write to managers.csv 
+        if isinstance(employee, Manager):
+            with open(manager_file_path, mode='a', newline='') as manager_csv:
+                manager_writer = csv.DictWriter(manager_csv, fieldnames=manager_fieldnames)
+                if not users_file_exists:
+                    manager_writer.writeheader()
 
-        # Write to users.csv
-        with open(users_file_path, mode='a', newline='') as user_csv:
-            user_writer = csv.DictWriter(user_csv, fieldnames=user_fieldnames)
-            if not users_file_exists:
-                user_writer.writeheader()
+                manager_writer.writerow({
+                    'id': employee.id,
+                    'username': employee.username,
+                    'password': employee.password,
+                    'name': employee.name
+                })
+        
+        # Write to waiter.csv
+        elif isinstance(employee, Waiter):
+            with open(waiter_file_path, mode='a', newline='') as waiter_csv:
+                waiter_writer = csv.DictWriter(waiter_csv, fieldnames=waiter_fieldnames)
+                if not users_file_exists:
+                    waiter_writer.writeheader()
 
-            user_writer.writerow({
-                'id': employee.id,
-                'username': employee.username,
-                'password': employee.password,
-                'role': employee.role
-            })
+                waiter_writer.writerow({
+                    'id': employee.id,
+                    'username': employee.username,
+                    'password': employee.password,
+                    'name': employee.name
+                })
+                
+        elif isinstance(employee, Cook):
+            with open(users_file_path, mode='a', newline='') as cook_csv:
+                cook_writer = csv.DictWriter(cook_csv, fieldnames=user_fieldnames)
+                if not users_file_exists:
+                    cook_writer.writeheader()
+
+                cook_writer.writerow({
+                    'id': employee.id,
+                    'username': employee.username,
+                    'password': employee.password,
+                    'name': employee.name
+                })
+                
+            
 
 
 #Simplified privilege check to one method.

@@ -1,8 +1,4 @@
 id,username,password,role
-0,bchen,1234,manager
-7,jbourne,1234,Waiter
-7,jbourne,1234,Waiter
-1,bchen,1234,Waiter
-1,bchen,1234,Waiter
-2,jebhj,12345678,Manager
-2,jebhj,12345678,Manager
+2,bchen,1234,Manager
+3,jtatum,12345,Waiter
+2,jcharles,1234,Waiter

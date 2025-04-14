@@ -13,6 +13,7 @@ import pandas as pd
 
 import csv
 import os
+
 from src.utils.employee_factory import create_manager, create_cook, create_waiter
 from src.Restaurant import Restaurant
 
@@ -72,13 +73,13 @@ def login():
 
             role = check_role(username, password)
             
-            if role == "manager":
+            if role.lower() == "manager":
                 return redirect(url_for("manager"))
             
-            elif role == "waiter":    
+            elif role.lower() == "waiter":    
                 return redirect(url_for("waiter"))
             
-            elif role == "cook":
+            elif role.lower() == "cook":
                 return redirect(url_for("cook"))
         
         else:
@@ -159,7 +160,8 @@ def view_employees():
             for row in employee_reader:
                 employees.append({
                     'id': int(row['id']),
-                    'name': row['name']
+                    'name': row['name'],
+                    'role': row['role']
                 })
 
     # Sort employees by ID
@@ -232,6 +234,8 @@ def edit_employee(employee_id):
 # Route to delete employee
 @app.route('/employee/<int:employee_id>/delete', methods=['POST'])
 def delete_employee(employee_id):
+    
+    
     employee_file_path = os.path.join('data', 'employee.csv')
 
     employees = []
@@ -242,7 +246,35 @@ def delete_employee(employee_id):
             employees = list(employee_reader)
 
     employees = [emp for emp in employees if int(emp['id']) != employee_id]
+    current_employee_role = [emp["role"] for emp in employees if int(emp['id']) == employee_id]
+    
+    # Need to get the employee role to delete from managers
+    if current_employee_role.lower() == "waiter":
+        waiter_file_path = os.path.join('data', 'waiter.csv')
+    
+        employees = []
 
+        if os.path.isfile(waiter_file_path):
+            with open(waiter_file_path, mode='r', newline='') as wait_csv:
+                employee_reader = csv.DictReader(wait_csv)
+                employees = list(employee_reader)
+            
+            employees = [emp for emp in employees if int(emp['id']) != employee_id]
+            
+            with open(employee_file_path, mode='w', newline='') as wait_csv:
+                fieldnames = ['id', 'username', 'name', 'password']
+                writer = csv.DictWriter(wait_csv, fieldnames=fieldnames)
+                writer.writeheader()
+                for emp in employees:
+                    writer.writerow(emp)
+            
+    
+    elif current_employee_role.lower() == "manager":
+        pass
+    
+    elif current_employee_role.lower() == "cook":
+        pass
+    
     # Save updated list
     with open(employee_file_path, mode='w', newline='') as emp_csv:
         fieldnames = ['id', 'username', 'name', 'password', 'role']
@@ -253,6 +285,135 @@ def delete_employee(employee_id):
 
     flash('Employee deleted successfully!', 'success')
     return redirect('/view_employees')
+
+@app.route('/api/update_table_config', methods=['POST'])
+def update_table_config():
+    data = request.json
+    table_id = data.get('table_id')
+    size = data.get('size', 'small')
+    seats = data.get('seats', 4)
+    joined_with = data.get('joined_with', [])
+    
+    if not table_id:
+        return jsonify({'success': False, 'message': 'Missing table ID'}), 400
+    
+    # Read the current tables configuration
+    tables_config = []
+    try:
+        with open('data/table_config.csv', 'r') as file:
+            reader = csv.DictReader(file)
+            tables_config = list(reader)
+    except FileNotFoundError:
+        # If file doesn't exist, create an empty list
+        tables_config = []
+    
+    # Find if this table already has a configuration
+    table_found = False
+    for table in tables_config:
+        if table['table_id'] == str(table_id):
+            table['size'] = size
+            table['seats'] = str(seats)
+            table['joined_with'] = ','.join(joined_with) if joined_with else ''
+            table_found = True
+            break
+    
+    # If table not found, add a new configuration
+    if not table_found:
+        tables_config.append({
+            'table_id': str(table_id),
+            'size': size,
+            'seats': str(seats),
+            'joined_with': ','.join(joined_with) if joined_with else ''
+        })
+    
+    # Write the updated configuration back to the CSV
+    try:
+        with open('data/table_config.csv', 'w', newline='') as file:
+            fieldnames = ['table_id', 'size', 'seats', 'joined_with']
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(tables_config)
+    except Exception as e:
+        print(f"Error writing to table_config.csv: {e}")
+        return jsonify({'success': False, 'message': 'Error updating table configuration'}), 500
+    
+    return jsonify({'success': True})
+
+@app.route('/api/save_layout', methods=['POST'])
+def save_layout():
+    data = request.json
+    tables = data.get('tables', [])
+    joined_tables = data.get('joinedTables', {})
+    
+    if not tables:
+        return jsonify({'success': False, 'message': 'No table data provided'}), 400
+    
+    # Save table layout configuration
+    try:
+        # Save table positions and sizes
+        with open('data/table_layout.csv', 'w', newline='') as file:
+            fieldnames = ['table_id', 'position_left', 'position_top', 'size', 'seats']
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
+            
+            for table in tables:
+                position = table.get('position', {})
+                writer.writerow({
+                    'table_id': table['id'],
+                    'position_left': position.get('left', 0),
+                    'position_top': position.get('top', 0),
+                    'size': table.get('size', 'small'),
+                    'seats': table.get('seats', 4)
+                })
+        
+        # Save joined tables information
+        with open('data/joined_tables.csv', 'w', newline='') as file:
+            fieldnames = ['primary_table_id', 'joined_table_ids']
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
+            
+            for primary_id, joined_ids in joined_tables.items():
+                writer.writerow({
+                    'primary_table_id': primary_id,
+                    'joined_table_ids': ','.join(joined_ids) if joined_ids else ''
+                })
+                
+        return jsonify({'success': True, 'message': 'Layout saved successfully'})
+    
+    except Exception as e:
+        print(f"Error saving layout: {e}")
+        return jsonify({'success': False, 'message': f'Error saving layout: {str(e)}'}), 500
+
+@app.route('/api/load_layout', methods=['GET'])
+def load_layout():
+    try:
+        # Load table positions and configurations
+        table_layout = []
+        if os.path.exists('data/table_layout.csv'):
+            with open('data/table_layout.csv', 'r') as file:
+                reader = csv.DictReader(file)
+                table_layout = list(reader)
+        
+        # Load joined tables information
+        joined_tables = {}
+        if os.path.exists('data/joined_tables.csv'):
+            with open('data/joined_tables.csv', 'r') as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    primary_id = row['primary_table_id']
+                    joined_ids = row['joined_table_ids'].split(',') if row['joined_table_ids'] else []
+                    if joined_ids:  # Only add if there are actually joined tables
+                        joined_tables[primary_id] = joined_ids
+        
+        return jsonify({
+            'success': True,
+            'tableLayout': table_layout,
+            'joinedTables': joined_tables
+        })
+    
+    except Exception as e:
+        print(f"Error loading layout: {e}")
+        return jsonify({'success': False, 'message': f'Error loading layout: {str(e)}'}), 500
 
 @app.route('/api/update_table', methods=['POST'])
 def update_table():
@@ -311,7 +472,7 @@ def update_table():
     
     return jsonify({'success': True})
 
-# Add this route to your app.py file
+# Route to get waiters
 @app.route('/api/waiters', methods=['GET'])
 def get_waiters():
     waiters = []

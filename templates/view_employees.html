@@ -44,6 +44,7 @@
                             <tr>
                                 <th>ID</th>
                                 <th>Name</th>
+                                <th>Role</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -52,6 +53,7 @@
                             <tr>
                                 <td>{{ employee['id'] }}</td>
                                 <td>{{ employee['name'] }}</td>
+                                <td>{{ employee['role'] }}</td>
                                 <td>
                                     <a href="/employee/{{ employee['id'] }}" class="btn view-btn">View</a>
                                 </td>
@@ -65,12 +67,6 @@
 
         <footer>
             <div class="footer-content">
-                <div class="footer-logo">Plate & Byte</div>
-                <ul class="footer-links">
-                    <li><a href="#">Privacy Policy</a></li>
-                    <li><a href="#">Terms of Service</a></li>
-                    <li><a href="#">Contact Us</a></li>
-                </ul>
             </div>
             <div class="copyright">
                 &copy; 2025 Plate & Byte. All rights reserved.
