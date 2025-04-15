@@ -42,13 +42,11 @@
                 </div>
                 <p style="margin-top: 20px; font-size: 0.9rem;">Double-click on a table to assign a waiter and change status</p>
                 
-                <div id="layoutEditHelp" style="margin-top: 20px; display: none;">
-                    <h4>Layout Edit Mode:</h4>
-                    <ul style="padding-left: 20px; font-size: 0.9rem; margin-top: 10px;">
-                        <li>Click on tables to select them</li>
-                        <li>Use "Join Tables" to combine selected tables</li>
-                        <li>Double-click a table to configure seats</li>
-                    </ul>
+                <div class="assigned-tables-section">
+                    <h3 style="margin-top: 30px;">My Assigned Tables</h3>
+                    <div id="assignedTablesList" class="assigned-tables-list">
+                        <p class="loading-text">Loading your assigned tables...</p>
+                    </div>
                 </div>
             </div>
 
@@ -141,12 +139,6 @@
                             <span>Dirty</span>
                         </label>
                     </div>
-                    
-                    <h4>Assign Waiter</h4>
-                    <select id="waiterSelect" style="width: 100%; padding: 8px; margin-top: 5px; border-radius: 4px; border: 1px solid #ddd;">
-                        <option value="">Select a waiter</option>
-                        <!-- Waiters will be loaded here -->
-                    </select>
                 </div>
             </div>
             <div class="modal-footer">
@@ -172,9 +164,10 @@
 
     const tableData = {};
     let currentTableId = null;
+    let currentWaiterId = null;
+    let currentWaiterName = null;
     const modal = document.getElementById('tableModal');
     const modalTitle = document.getElementById('modalTableTitle');
-    const waiterSelect = document.getElementById('waiterSelect');
     
     // Layout editing variables
     let isEditMode = false;
@@ -215,9 +208,9 @@
     
     // Load waiters when the page loads
     document.addEventListener('DOMContentLoaded', function() {
-        loadWaiters();
         loadTableData();
         setupEventListeners();
+        getCurrentWaiterInfo();
     });
     
     function setupEventListeners() {
@@ -253,22 +246,95 @@
         });
     }
     
-    function loadWaiters() {
-        fetch('/api/waiters')
+    function getCurrentWaiterInfo() {
+        // Fetch the current logged-in waiter information
+        fetch('/api/current_waiter')
             .then(response => response.json())
             .then(data => {
-                waiterSelect.innerHTML = '<option value="">Select a waiter</option>';
-                data.forEach(waiter => {
-                    const option = document.createElement('option');
-                    option.value = waiter.username;
-                    option.textContent = waiter.name;
-                    option.dataset.waiterId = waiter.id;
-                    waiterSelect.appendChild(option);
-                });
+                if (data.success) {
+                    currentWaiterId = data.waiter_id;
+                    currentWaiterName = data.waiter_name;
+                    console.log(`Logged in as waiter: ${currentWaiterName} (ID: ${currentWaiterId})`);
+                    
+                    // After getting waiter info, update the assigned tables list
+                    updateAssignedTablesList();
+                } else {
+                    console.error('Error getting current waiter info:', data.message);
+                }
             })
-            .catch(error => console.error('Error loading waiters:', error));
+            .catch(error => console.error('Error fetching current waiter info:', error));
+    }
+
+    function updateAssignedTablesList() {
+        const assignedTablesList = document.getElementById('assignedTablesList');
+        
+        // Get the current waiter ID from the session or a global variable
+        // For now, we'll use the current logged-in user's ID
+        fetch('/api/current_waiter')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    currentWaiterId = data.waiter_id;
+                    
+                    // Filter the tableData to find tables assigned to this waiter
+                    const assignedTables = Object.keys(tableData).filter(tableId => 
+                        tableData[tableId].waiter_id === currentWaiterId
+                    );
+                    
+                    // If no tables are assigned, show a message
+                    if (assignedTables.length === 0) {
+                        assignedTablesList.innerHTML = '<p>No tables currently assigned to you</p>';
+                        return;
+                    }
+                    
+                    // Create the HTML for the assigned tables list
+                    let html = '<ul class="assigned-tables">';
+                    
+                    assignedTables.forEach(tableId => {
+                        const table = tableData[tableId];
+                        const statusClass = table.status; // available, occupied, or dirty
+                        const statusText = table.status.charAt(0).toUpperCase() + table.status.slice(1);
+                        
+                        html += `
+                            <li class="assigned-table-item" onclick="highlightTable('${tableId}')">
+                                <div class="table-indicator">
+                                    <div class="status-dot ${statusClass}"></div>
+                                    <span>Table #${tableId}</span>
+                                </div>
+                                <div class="table-status">${statusText}</div>
+                            </li>
+                        `;
+                    });
+                    
+                    html += '</ul>';
+                    assignedTablesList.innerHTML = html;
+                } else {
+                    assignedTablesList.innerHTML = '<p>Please log in to see your assigned tables</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error getting current waiter:', error);
+                assignedTablesList.innerHTML = '<p>Error loading assigned tables</p>';
+            });
+    }
+
+    function highlightTable(tableId) {
+        // Remove highlight from all tables
+        document.querySelectorAll('.cell').forEach(table => {
+            table.classList.remove('highlighted');
+        });
+        
+        // Add highlight to the selected table
+        const tableElement = document.getElementById(`table-${tableId}`);
+        if (tableElement) {
+            tableElement.classList.add('highlighted');
+            
+            // Scroll to the table if needed
+            tableElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
     }
     
+    // Modify the existing loadTableData function to update the assigned tables list
     function loadTableData() {
         fetch('/api/tables')
             .then(response => response.json())
@@ -289,26 +355,33 @@
                         statusIndicator.className = `status-indicator ${status}`;
                         
                         // Update waiter info if assigned
-                        if (table.waiter_id) {
-                            const waiterInfoElement = document.getElementById(`waiter-info-${tableId}`);
-                            // You would need to fetch waiter name based on ID
-                            // For now, just show the ID
+                        const waiterInfoElement = document.getElementById(`waiter-info-${tableId}`);
+                        if (table.waiter_id && table.waiter_name) {
+                            waiterInfoElement.textContent = `Waiter: ${table.waiter_name}`;
+                        } else if (table.waiter_id) {
                             waiterInfoElement.textContent = `Waiter ID: ${table.waiter_id}`;
+                        } else {
+                            waiterInfoElement.textContent = '';
                         }
                         
                         // Store table data
                         tableData[tableId] = {
                             status: status,
                             waiter_id: table.waiter_id || '',
+                            waiter_name: table.waiter_name || '',
                             seats: parseInt(tableElement.dataset.seats) || 4,
                             size: tableElement.dataset.size || 'small',
                             joined: tableElement.classList.contains('joined')
                         };
                     }
                 });
+                
+                // After loading all table data, update the assigned tables list
+                updateAssignedTablesList();
             })
             .catch(error => console.error('Error loading tables:', error));
     }
+    
     
     function handleTableClick(element) {
         if (isEditMode) {
@@ -376,16 +449,12 @@
             
             document.querySelector(`input[name="tableStatus"][value="${currentStatus}"]`).checked = true;
             
-            // Set current waiter in modal if assigned
-            if (tableData[tableId] && tableData[tableId].waiter) {
-                waiterSelect.value = tableData[tableId].waiter;
-            } else {
-                waiterSelect.value = "";
-            }
+            // Remove waiter selection code
         }
         
         modal.style.display = 'block';
     }
+    
     
     function closeModal() {
         modal.style.display = 'none';
@@ -402,34 +471,21 @@
         // Get selected status
         const selectedStatus = document.querySelector('input[name="tableStatus"]:checked').value;
         
-        // Get selected waiter
-        const selectedWaiter = waiterSelect.value;
-        const selectedWaiterName = selectedWaiter ? waiterSelect.options[waiterSelect.selectedIndex].text : '';
-        
-        // Get the waiter ID from the data attribute
-        const selectedWaiterId = selectedWaiter ? 
-            waiterSelect.options[waiterSelect.selectedIndex].dataset.waiterId : '';
+        // Keep the existing waiter assignment
+        const existingWaiterId = tableData[currentTableId].waiter_id || '';
+        const existingWaiterName = tableData[currentTableId].waiter_name || '';
         
         // Update table data
         tableData[currentTableId] = {
             ...tableData[currentTableId],
-            status: selectedStatus,
-            waiter: selectedWaiter,
-            waiterName: selectedWaiterName,
-            waiterId: selectedWaiterId
+            status: selectedStatus
+            // Not changing waiter assignment
         };
         
         // Update visual status
         tableElement.classList.remove('available', 'occupied', 'dirty');
         tableElement.classList.add(selectedStatus);
         statusIndicator.className = 'status-indicator ' + selectedStatus;
-        
-        // Update waiter info
-        if (selectedWaiter) {
-            waiterInfoElement.textContent = `Waiter: ${selectedWaiterName}`;
-        } else {
-            waiterInfoElement.textContent = '';
-        }
         
         // Send update to server
         fetch('/api/update_table', {
@@ -440,12 +496,14 @@
             body: JSON.stringify({
                 table_id: currentTableId,
                 status: selectedStatus,
-                waiter_id: selectedWaiterId
+                waiter_id: existingWaiterId // Keep existing waiter
             }),
         })
         .then(response => response.json())
         .then(data => {
             console.log('Success:', data);
+            // Update the assigned tables list
+            updateAssignedTablesList();
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -453,6 +511,7 @@
         
         closeModal();
     }
+    
     
     function saveTableConfig() {
         if (!currentTableId) return;
@@ -497,6 +556,13 @@
                 seats: seatCount,
                 joined_with: joinedTables[currentTableId] || []
             }),
+        })
+        .then(data => {
+            console.log('Success:', data);
+            // Update the assigned tables list if we're the current waiter
+            if (currentWaiterId) {
+                updateAssignedTablesList();
+            }
         })
         .then(response => response.json())
         .then(data => {

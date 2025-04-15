@@ -6,7 +6,8 @@ from flask import (
     url_for,
     get_flashed_messages, 
     flash,
-    jsonify
+    jsonify,
+    session
 )
 
 import pandas as pd
@@ -64,13 +65,14 @@ def home():
 # --------Login Path----------- #
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
         
         if check_credential(username, password):
-
+            # Store username in session
+            session['username'] = username
+            
             role = check_role(username, password)
             
             if role.lower() == "manager":
@@ -84,10 +86,9 @@ def login():
         
         else:
             return render_template("login.html", 
-                                   error="That Plate and Byte account doesn't exist. Enter a different account.")
+                                error="That Plate and Byte account doesn't exist. Enter a different account.")
     
     return render_template("login.html")
-    
     
 # --------- Signup Page --------- #
 @app.route("/signup", methods=["GET", "POST"])
@@ -492,17 +493,60 @@ def get_waiters():
     
     return jsonify(waiters)
 
+@app.route('/api/current_waiter', methods=['GET'])
+def get_current_waiter():
+    # Get username from session (you'll need to set this during login)
+    username = session.get('username')
+    
+    if not username:
+        return jsonify({'success': False, 'message': 'Not logged in'})
+    
+    # Look up the waiter in the waiters.csv file
+    try:
+        with open('data/waiters.csv', 'r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                if row.get('username') == username:
+                    return jsonify({
+                        'success': True,
+                        'waiter_id': row.get('id', ''),
+                        'waiter_name': row.get('name', '')
+                    })
+    except Exception as e:
+        print(f"Error reading waiters.csv: {e}")
+    
+    return jsonify({'success': False, 'message': 'Waiter not found'})
+
 @app.route('/api/tables', methods=['GET'])
 def get_tables():
     tables = []
+    waiters = {}
+    
+    # First load all waiters into a dictionary for quick lookup
+    try:
+        with open('data/waiters.csv', 'r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                waiters[row.get('id', '')] = {
+                    'name': row.get('name', ''),
+                    'username': row.get('username', '')
+                }
+    except Exception as e:
+        print(f"Error reading waiters.csv: {e}")
+    
+    # Then load tables with waiter names
     try:
         with open('data/tables.csv', 'r') as file:
             reader = csv.DictReader(file)
             for row in reader:
+                waiter_id = row.get('waiter_id', '')
+                waiter_name = waiters.get(waiter_id, {}).get('name', '') if waiter_id else ''
+                
                 tables.append({
                     'table_id': row.get('table_id', ''),
                     'status': row.get('status', 'Available'),
-                    'waiter_id': row.get('waiter_id', '')
+                    'waiter_id': waiter_id,
+                    'waiter_name': waiter_name
                 })
     except Exception as e:
         print(f"Error reading tables.csv: {e}")
