@@ -11,6 +11,7 @@ from flask import (
 )
 
 import pandas as pd
+import numpy as np
 
 import csv
 import os
@@ -18,7 +19,7 @@ import os
 from src.utils.employee_factory import create_manager, create_cook, create_waiter
 from src.Restaurant import Restaurant
 
-USER_CSV_PATH = "data/users.csv"
+USER_CSV_PATH = "data/employee.csv"
 
 def check_role(username, password):
     user_df = pd.read_csv(USER_CSV_PATH, index_col=0)
@@ -132,8 +133,9 @@ def add_employee_web():
                     if row['username'] == username:
                         return "Username already exists.", 400
 
-        emp_id = len(restaurant.employees) + 1
-
+        emp_id = restaurant.curr_emp_id + 1
+        restaurant.curr_emp_id += 1
+        
         if role == "Manager":
             new_employee = create_manager(name, username, password, emp_id)
         elif role == "Cook":
@@ -237,52 +239,34 @@ def edit_employee(employee_id):
 def delete_employee(employee_id):
     
     
+    tables_file_path = os.path.join('data', 'tables.csv')
+    waiters_file_path = os.path.join('data', 'waiters.csv')
     employee_file_path = os.path.join('data', 'employee.csv')
 
-    employees = []
-
-    if os.path.isfile(employee_file_path):
-        with open(employee_file_path, mode='r', newline='') as emp_csv:
-            employee_reader = csv.DictReader(emp_csv)
-            employees = list(employee_reader)
-
-    employees = [emp for emp in employees if int(emp['id']) != employee_id]
-    current_employee_role = [emp["role"] for emp in employees if int(emp['id']) == employee_id]
+    employee_df = pd.read_csv(employee_file_path, index_col=0)
     
-    # Need to get the employee role to delete from managers
-    if current_employee_role.lower() == "waiter":
-        waiter_file_path = os.path.join('data', 'waiter.csv')
+    current_employees = employee_df[employee_df.index != employee_id]
+    current_employees.to_csv(employee_file_path)
     
-        employees = []
-
-        if os.path.isfile(waiter_file_path):
-            with open(waiter_file_path, mode='r', newline='') as wait_csv:
-                employee_reader = csv.DictReader(wait_csv)
-                employees = list(employee_reader)
-            
-            employees = [emp for emp in employees if int(emp['id']) != employee_id]
-            
-            with open(employee_file_path, mode='w', newline='') as wait_csv:
-                fieldnames = ['id', 'username', 'name', 'password']
-                writer = csv.DictWriter(wait_csv, fieldnames=fieldnames)
-                writer.writeheader()
-                for emp in employees:
-                    writer.writerow(emp)
-            
+    removed_employee_role = employee_df[employee_df.index == employee_id].role.item()
     
-    elif current_employee_role.lower() == "manager":
+    if removed_employee_role.lower() == "waiter":
+        waiter_df = pd.read_csv(waiters_file_path, index_col=0)
+        tables_df = pd.read_csv(tables_file_path, index_col=0)
+        
+        current_waiters = waiter_df[waiter_df.index != employee_id]
+        current_waiters.to_csv(waiters_file_path)
+        
+        tables_df.loc[tables_df.waiter_id == 2, "waiter_id"] = np.nan
+        tables_df.to_csv(tables_file_path)
+        
+    elif removed_employee_role.lower() == "manager":
         pass
+            
     
-    elif current_employee_role.lower() == "cook":
-        pass
-    
-    # Save updated list
-    with open(employee_file_path, mode='w', newline='') as emp_csv:
-        fieldnames = ['id', 'username', 'name', 'password', 'role']
-        writer = csv.DictWriter(emp_csv, fieldnames=fieldnames)
-        writer.writeheader()
-        for emp in employees:
-            writer.writerow(emp)
+    # elif current_employee_role.lower() == "cook":
+    #     pass
+        
 
     flash('Employee deleted successfully!', 'success')
     return redirect('/view_employees')
