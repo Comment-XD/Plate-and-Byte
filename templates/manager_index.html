@@ -15,7 +15,13 @@
                 <li><a href="{{url_for('view_employees')}}">Employees</a></li>
                 <li><a href="#">Menu</a></li>
                 <li><a href="#">Reports</a></li>
-                <li><a href="#">Settings</a></li>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle">Settings</a>
+                    <div class="dropdown-menu">
+                        <a href="/profile">Profile</a>
+                        <a href="/">Logout</a>
+                    </div>
+                </li>
             </ul>
         </nav>
         
@@ -172,9 +178,6 @@
     
     <footer>
         <div class="container">
-            <div class="footer-content">
-                <div class="footer-logo">Plate & Byte</div>
-            </div>
             <div class="copyright">
                 &copy; 2025 Plate & Byte. All rights reserved.
             </div>
@@ -231,6 +234,25 @@
         loadWaiters();
         loadTableData();
         setupEventListeners();
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Dropdown functionality
+        const dropdownToggle = document.querySelector('.dropdown-toggle');
+        const dropdownMenu = document.querySelector('.dropdown-menu');
+        
+        // Alternative click method for mobile devices
+        dropdownToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.matches('.dropdown-toggle') && !e.target.closest('.dropdown-menu')) {
+                dropdownMenu.style.display = 'none';
+            }
+        });
     });
     
     function setupEventListeners() {
