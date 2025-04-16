@@ -1,3 +1,5 @@
+import traceback
+
 from flask import (
     Flask,
     render_template,
@@ -43,6 +45,18 @@ def add_user(username, password, role="waiter"):
         writer = csv.writer(file)
         writer.writerow([user_id, username, password, role])
 
+def write_order_to_csv(table_id, order_items, path="data/orders.csv"):
+    fieldnames = ["table_id", "food_item", "price", "total_quantity", "total_price"]
+    with open(path, mode="a", newline='') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        for item in order_items:
+            writer.writerow({
+                "table_id": table_id,
+                "food_item": item["food_item"],
+                "price": item["price"],
+                "total_quantity": item["total_quantity"],
+                "total_price": item["total_price"]
+            })
 
 def user_exists(username):
     user_df = pd.read_csv(USER_CSV_PATH)
@@ -510,6 +524,22 @@ def get_tables():
         pass
     
     return jsonify(tables)
+
+@app.route('/api/write_order', methods=['POST'])
+def write_order():
+    data = request.get_json()
+    table_id = data.get('table_id')
+    order_items = data.get('items')
+
+    if not table_id or not order_items:
+        return jsonify({'success': False, 'message': 'Missing table number or order items'}), 400
+
+    try:
+        write_order_to_csv(table_id, order_items)
+        return jsonify({'success': True, 'message': 'Order saved successfully'}), 200
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route("/manager")
 def manager():

@@ -244,3 +244,13 @@ footer {
         flex-direction: column;
     }
 }
+
+/*Fix for the home screen buttons*/
+.nav-links .btn {
+    color: white !important;
+}
+
+.nav-links .btn:hover {
+    color: white !important;
+}
+
