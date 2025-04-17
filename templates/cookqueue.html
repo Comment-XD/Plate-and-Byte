@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cook Queue</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/cookqueue.css') }}">
+</head>
+<body>
+
+    <!-- Orange Navbar -->
+    <div class="navbar">
+        <a href="/">Home</a>
+        <a href="/view_employees">Employees</a>
+        <a href="/add_employee_web">Add Employee</a>
+        <a href="/cookqueue">Cook Queue</a>
+    </div>
+
+    <div class="form-container">
+        <h2>Cook Queue</h2>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% if orders %}
+            <table class="order-table">
+                <thead>
+                    <tr>
+                        <th>Table</th>
+                        <th>Food Item</th>
+                        <th>Price</th>
+                        <th>Qty</th>
+                        <th>Total</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                        <tr>
+                            <td>{{ order['table_number'] }}</td>
+                            <td>{{ order['food_item'] }}</td>
+                            <td>${{ order['price'] }}</td>
+                            <td>{{ order['total_quantity'] }}</td>
+                            <td>${{ order['total_price'] }}</td>
+                            <td>
+                                <form method="POST" action="/cook_order" style="margin: 0;">
+                                    <input type="hidden" name="table_number" value="{{ order['table_number'] }}">
+                                    <input type="hidden" name="food_item" value="{{ order['food_item'] }}">
+                                    <button type="submit" class="cook-button">Cook</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No orders in the queue.</p>
+        {% endif %}
+    </div>
+
+    <!-- Flash fade out -->
+    <script>
+        setTimeout(() => {
+            document.querySelectorAll('.flash-message').forEach(el => el.style.opacity = '0');
+        }, 3000);
+    </script>
+
+</body>
+</html>

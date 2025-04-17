@@ -561,3 +561,22 @@ def index():
 
 if __name__ == "__main__":
     app.run(debug=True, port=8000)
+
+###Cook Queu For adding and removing orders.
+@app.route('/cook_order', methods=['POST'])
+def cook_order_route():
+    table_number = int(request.form['table_number'])
+    food_item = request.form['food_item']
+    restaurant.cook_order(table_number, food_item)
+    flash(f"{food_item} for Table {table_number} has been cooked!", "success")
+    return redirect('/cookqueue')
+
+@app.route('/cookqueue')
+def cook_queue():
+    orders = []
+    orders_path = os.path.join('data', 'orders.csv')
+    if os.path.isfile(orders_path):
+        with open(orders_path, mode='r', newline='') as file:
+            reader = csv.DictReader(file)
+            orders = list(reader)
+    return render_template('cookqueue.html', orders=orders)

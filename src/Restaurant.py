@@ -202,3 +202,49 @@ class Restaurant:
         if employee:
             return employee.role
         return None
+
+####Cook Order Method takes from Orders.CSv finds it and copies it to sales then deletes from the orders.csv.
+    def cook_order(self, table_number: int, food_item: str):
+        orders_path = os.path.join('data', 'orders.csv')
+        sales_path = os.path.join('data', 'sales.csv')
+
+        updated_orders = []
+        cooked_order = None
+
+        # Read orders.csv and find the order
+        with open(orders_path, mode='r', newline='') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                if int(row['table_number']) == table_number and row[
+                    'food_item'].strip().lower() == food_item.strip().lower():
+                    cooked_order = row
+                else:
+                    updated_orders.append(row)
+
+        # If order found, write to sales.csv
+        if cooked_order:
+            # Ensure sales.csv exists with headers
+            file_exists = os.path.isfile(sales_path)
+            with open(sales_path, mode='a', newline='') as file:
+                writer = csv.DictWriter(file, fieldnames=['table_number', 'food_item', 'price', 'total_quantity',
+                                                          'total_price'])
+                if not file_exists:
+                    writer.writeheader()
+                writer.writerow({
+                    'table_number': cooked_order['table_number'],
+                    'food_item': cooked_order['food_item'],
+                    'price': cooked_order['price'],
+                    'total_quantity': cooked_order['total_quantity'],
+                    'total_price': cooked_order['total_price']
+                })
+
+            # Overwrite orders.csv without the cooked order
+            with open(orders_path, mode='w', newline='') as file:
+                writer = csv.DictWriter(file, fieldnames=['table_number', 'food_item', 'price', 'total_quantity',
+                                                          'total_price'])
+                writer.writeheader()
+                writer.writerows(updated_orders)
+
+            print(f"✅ Cooked and completed: {food_item} for Table {table_number}")
+        else:
+            print(f"❌ No matching order found for {food_item} at Table {table_number}")
