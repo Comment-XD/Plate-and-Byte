@@ -559,8 +559,7 @@ def index():
     return render_template("index.html")
 
 
-if __name__ == "__main__":
-    app.run(debug=True, port=8000)
+
 
 ###Cook Queu For adding and removing orders.
 @app.route('/cook_order', methods=['POST'])
@@ -580,3 +579,6 @@ def cook_queue():
             reader = csv.DictReader(file)
             orders = list(reader)
     return render_template('cookqueue.html', orders=orders)
+
+if __name__ == "__main__":
+    app.run(debug=True, port=8000)
