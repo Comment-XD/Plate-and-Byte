@@ -383,7 +383,7 @@
             // In edit mode, clicking selects/deselects tables
             toggleTableSelection(element);
         } else {
-            // Regular mode functionality if needed
+            if (element.classList.contains('dirty')) return; // Block interaction
         }
     }
     
@@ -406,6 +406,10 @@
     
     function openTableModal(element) {
         const tableId = element.dataset.tableId;
+
+        if (!isEditMode && element.classList.contains('dirty')) {
+            return; // Don't open modal for dirty table
+        }
 
         console.log("Opening modal for Table:", tableId);
 
@@ -562,9 +566,11 @@
             });
         });
 
-        if (currentTableId && items.length > 0) {
-            tableOrders[currentTableId] = items;
-
+        if (selectedStatus === 'dirty') {
+        // Clear all orders for this table
+        delete tableOrders[currentTableId];
+        } else if (currentTableId && items.length > 0) {
+            tableOrders[currentTableId] = items
             sendOrderToServer(currentTableId, items);
         }
         
