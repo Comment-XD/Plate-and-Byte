@@ -80,7 +80,7 @@
     </div>
     
     <!-- Table Management Modal -->
-    <div id="tableModal" class="modal">
+    <div id="tableModal" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="modalTableTitle">Table #1</h3>
@@ -126,6 +126,22 @@
                 </div>
                 
                 <!-- Regular Table Status Section -->
+
+                <!-- Ordered Items Section -->
+                <div id="orderedItemsSection" style="margin-bottom: 20px;">
+                    <h4>Ordered Items</h4>
+                    <div id="orderedItemsList" class="ordered-items-list">
+                        <p id="noItemsPlaceholder" class="placeholder-text">Start your order here 🍽️</p>
+                        <!-- Ordered items will be inserted here -->
+                    </div>
+                    <div class="ordered-items-summary">
+                        <span>Total Items: <span id="totalItems">0</span></span>
+                        <span>Total Price: $<span id="totalPrice">0.00</span></span>
+                    </div>
+                    <button id="addItemsBtn" class="primary">Add Items</button>
+                </div>
+
+
                 <div id="tableStatusSection">
                     <h4>Change Status</h4>
                     <div class="status-options">
@@ -154,7 +170,27 @@
             </div>
         </div>
     </div>
-    
+
+    <!-- Add Items Screen -->
+    <div id="addItemsScreen" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Select Menu Items</h3>
+                <span class="close" onclick="closeAddItemsScreen()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="menuItemsGrid" class="menu-items-grid">
+                    <!-- Menu items will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary" onclick="closeAddItemsScreen()">Cancel</button>
+                <button class="primary" onclick="finishAddingItems()">Finish</button>
+            </div>
+        </div>
+    </div>
+
+
     <footer>
         <div class="container">
             <div class="copyright">
@@ -162,15 +198,23 @@
             </div>
         </div>
     </footer>
-    
-    <script>
 
+
+
+    <script>
+    const tableOrders = {};
     const tableData = {};
     let currentTableId = null;
     let currentWaiterId = null;
     let currentWaiterName = null;
     const modal = document.getElementById('tableModal');
     const modalTitle = document.getElementById('modalTableTitle');
+    const waiterSelect = document.getElementById('waiterSelect');
+
+    const orderedItemsList = document.getElementById('orderedItemsList');
+    const totalItemsEl = document.getElementById('totalItems');
+    const totalPriceEl = document.getElementById('totalPrice');
+    const placeholder = document.getElementById('noItemsPlaceholder');
     
     // Layout editing variables
     let isEditMode = false;
@@ -216,26 +260,31 @@
         getCurrentWaiterInfo();
     });
 
-    document.addEventListener('DOMContentLoaded', function() {
-        // Dropdown functionality
-        const dropdownToggle = document.querySelector('.dropdown-toggle');
-        const dropdownMenu = document.querySelector('.dropdown-menu');
-        
-        // Alternative click method for mobile devices
-        dropdownToggle.addEventListener('click', function(e) {
-            e.preventDefault();
-            dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+    function rebindTableEvents() {
+        document.querySelectorAll('.cell').forEach(cell => {
+            cell.onclick = function () { handleTableClick(this); };
+            cell.ondblclick = function () { openTableModal(this); };
         });
-        
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!e.target.matches('.dropdown-toggle') && !e.target.closest('.dropdown-menu')) {
-                dropdownMenu.style.display = 'none';
-            }
-        });
-    });
+    }
 
-    
+    function updateOrderSummary() {
+        const items = orderedItemsList.querySelectorAll('.item');
+        let totalItems = 0;
+        let totalPrice = 0;
+
+        items.forEach(item => {
+            const qty = parseInt(item.dataset.qty);
+            const price = parseFloat(item.dataset.price);
+            totalItems += qty;
+            totalPrice += qty * price;
+        });
+
+        totalItemsEl.textContent = totalItems;
+        totalPriceEl.textContent = totalPrice.toFixed(2);
+
+        placeholder.style.display = items.length === 0 ? 'block' : 'none';
+    }
+
     function setupEventListeners() {
         // Layout control buttons
         editLayoutBtn.addEventListener('click', toggleEditMode);
@@ -434,6 +483,9 @@
     
     function openTableModal(element) {
         const tableId = element.dataset.tableId;
+
+        console.log("Opening modal for Table:", tableId);
+
         currentTableId = tableId;
         modalTitle.textContent = `Table #${tableId}`;
         
@@ -472,9 +524,78 @@
             
             document.querySelector(`input[name="tableStatus"][value="${currentStatus}"]`).checked = true;
             
-            // Remove waiter selection code
+            // Set current waiter in modal if assigned
+            if (tableData[tableId] && tableData[tableId].waiter) {
+                waiterSelect.value = tableData[tableId].waiter;
+            } else {
+                waiterSelect.value = "";
+            }
         }
-        
+
+        // Clear previous list
+        orderedItemsList.innerHTML = '';
+        totalItemsEl.textContent = '0';
+        totalPriceEl.textContent = '0.00';
+        placeholder.style.display = 'block';
+
+        // Load saved items for this table, if any
+        const savedItems = tableOrders[tableId];
+        if (savedItems && savedItems.length > 0) {
+            placeholder.style.display = 'none';
+            savedItems.forEach(item => {
+                const itemEntry = document.createElement('div');
+                itemEntry.className = 'item';
+                itemEntry.dataset.name = item.food_item;
+                itemEntry.dataset.price = item.price;
+                itemEntry.dataset.qty = item.total_quantity;
+
+                itemEntry.innerHTML = `
+                    <span>
+                        ${item.food_item} ×
+                        <span class="qty-count">${item.total_quantity}</span>
+                        <button class="qty-btn plus">+</button>
+                        <button class="qty-btn minus">-</button>
+                    </span>
+                    <span>
+                        $<span class="editable-price">${item.total_price.toFixed(2)}</span>
+                        <span class="remove-item" style="margin-left:10px; cursor:pointer;" title="Remove">🗑️</span>
+                    </span>
+                `;
+
+                // Re-attach plus/minus/remove event listeners
+                itemEntry.querySelector('.plus').addEventListener('click', () => {
+                    const countEl = itemEntry.querySelector('.qty-count');
+                    let count = parseInt(countEl.textContent);
+                    count++;
+                    countEl.textContent = count;
+                    itemEntry.dataset.qty = count;
+                    itemEntry.querySelector('.editable-price').textContent = (count * item.price).toFixed(2);
+                    updateOrderSummary();
+                });
+
+                itemEntry.querySelector('.minus').addEventListener('click', () => {
+                    const countEl = itemEntry.querySelector('.qty-count');
+                    let count = parseInt(countEl.textContent);
+                    if (count > 1) {
+                        count--;
+                        countEl.textContent = count;
+                        itemEntry.dataset.qty = count;
+                        itemEntry.querySelector('.editable-price').textContent = (count * item.price).toFixed(2);
+                        updateOrderSummary();
+                    }
+                });
+
+                itemEntry.querySelector('.remove-item').addEventListener('click', () => {
+                    itemEntry.remove();
+                    updateOrderSummary();
+                });
+
+                orderedItemsList.appendChild(itemEntry);
+            });
+
+            updateOrderSummary();
+}
+
         modal.style.display = 'block';
     }
     
@@ -494,9 +615,36 @@
         // Get selected status
         const selectedStatus = document.querySelector('input[name="tableStatus"]:checked').value;
         
-        // Keep the existing waiter assignment
-        const existingWaiterId = tableData[currentTableId].waiter_id || '';
-        const existingWaiterName = tableData[currentTableId].waiter_name || '';
+        // Get selected waiter
+        const selectedWaiter = waiterSelect.value;
+        const selectedWaiterName = selectedWaiter ? waiterSelect.options[waiterSelect.selectedIndex].text : '';
+        
+        // Get the waiter ID from the data attribute
+        const selectedWaiterId = selectedWaiter ? 
+            waiterSelect.options[waiterSelect.selectedIndex].dataset.waiterId : '';
+
+        // Get table orders
+        const items = [];
+
+        document.querySelectorAll('.ordered-items-list .item').forEach(item => {
+            const name = item.dataset.name;
+            const price = parseFloat(item.dataset.price);
+            const qty = parseInt(item.dataset.qty);
+            const total = price * qty;
+
+            items.push({
+                food_item: name,
+                price: price,
+                total_quantity: qty,
+                total_price: total
+            });
+        });
+
+        if (currentTableId && items.length > 0) {
+            tableOrders[currentTableId] = items;
+
+            sendOrderToServer(currentTableId, items);
+        }
         
         // Update table data
         tableData[currentTableId] = {
@@ -533,6 +681,7 @@
         });
         
         closeModal();
+        rebindTableEvents();
     }
     
     
@@ -684,6 +833,7 @@
         // Add to grid
                 // Add to grid
                 seatingGrid.appendChild(newTable);
+                rebindTableEvents();
         
                 // Make the new table draggable
                 makeDraggable(newTable);
@@ -865,6 +1015,7 @@
                 .then(response => response.json())
                 .then(data => {
                     console.log('Layout saved:', data);
+                    rebindTableEvents();
                     // Exit edit mode
                     exitEditMode();
                 })
@@ -892,11 +1043,7 @@
                 if (originalLayout) {
                     seatingGrid.innerHTML = originalLayout;
                     
-                    // Reattach event handlers
-                    document.querySelectorAll('.cell').forEach(cell => {
-                        cell.onclick = function() { handleTableClick(this); };
-                        cell.ondblclick = function() { openTableModal(this); };
-                    });
+                    rebindTableEvents();
                 }
                 
                 // Reset joined tables
@@ -1033,6 +1180,260 @@
                     table.dataset.originalSeats = table.dataset.seats || 4;
                 });
             });
+
+            //Order item selection screen stuff
+            document.addEventListener('DOMContentLoaded', function () {
+            const addItemsBtn = document.getElementById('addItemsBtn');
+            const addItemsModal = document.getElementById('addItemsScreen');
+            const menuGrid = document.getElementById('menuItemsGrid');
+
+
+            const menuItems = [
+                { id: 1, name: "Burger", price: 8.99 },
+                { id: 2, name: "Pasta", price: 12.5 },
+                { id: 3, name: "Salad", price: 6.75 },
+                { id: 4, name: "Steak", price: 19.99 },
+                { id: 5, name: "Fries", price: 4.25 },
+                { id: 6, name: "Soup", price: 5.99 },
+            ];
+
+            addItemsBtn.addEventListener('click', () => {
+                openAddItemsScreen();
+            });
+
+            function openAddItemsScreen() {
+                menuGrid.innerHTML = '';
+
+                const categories = [
+                    {
+                        name: "Appetizers",
+                        color: "red",
+                        items: [
+                            { name: "Chicken Nachos", price: 8.5 },
+                            { name: "Pork Nachos", price: 8.5 },
+                            { name: "Pork or Chicken Sliders - 3", price: 5.0 },
+                            { name: "Catfish Bites", price: 6.5 },
+                            { name: "Fried Veggies", price: 6.5 },
+                        ]
+                    },
+                    {
+                        name: "Salads",
+                        color: "green",
+                        items: [
+                            { name: "House Salad", price: 7.5 },
+                            { name: "Wedge Salad", price: 7.5 },
+                            { name: "Caesar Salad", price: 7.5 },
+                            { name: "Sweet Potato Chicken Salad", price: 11.5 },
+                        ]
+                    },
+                    {
+                        name: "Entrees",
+                        color: "blue",
+                        items: [
+                            { name: "Shrimp & Grits", price: 13.5 },
+                            { name: "Sweet Tea Fried Chicken", price: 11.5 },
+                            { name: "Caribbean Chicken", price: 11.5 },
+                            { name: "Grilled Pork Chops", price: 11.0 },
+                            { name: "New York Strip Steak", price: 17.0 },
+                            { name: "Seared Tuna", price: 15.0 },
+                            { name: "Captain Crunch Chicken Tenders", price: 11.5 },
+                            { name: "Shock Top Grouper Fingers", price: 11.5 },
+                            { name: "Mac & Cheese Bar", price: 8.5 },
+                        ]
+                    },
+                    {
+                        name: "Sides",
+                        color: "brown",
+                        items: [
+                            "Curly Fries", "Wing Chips", "Sweet Potato Fries", "Creamy Cabbage Slaw", "Adluh Cheese Grits",
+                            "Mashed Potatoes", "Mac & Cheese", "Seasonal Vegetables", "Baked Beans"
+                        ].map(name => ({ name, price: 2.5 }))
+                    },
+                    {
+                        name: "Sandwiches",
+                        color: "sandybrown",
+                        items: [
+                            { name: "Grilled Cheese", price: 5.5 },
+                            { name: "Chicken BLT&A", price: 10.0 },
+                            { name: "Philly", price: 13.5 },
+                            { name: "Club", price: 10.0 },
+                            { name: "Meatball Sub", price: 10.0 },
+                        ]
+                    },
+                    {
+                        name: "Burgers",
+                        color: "teal",
+                        items: [
+                            { name: "Bacon Cheeseburger", price: 11.0 },
+                            { name: "Carolina Burger", price: 11.0 },
+                            { name: "Portobello Burger (V)", price: 8.5 },
+                            { name: "Vegan Boca Burger (V)", price: 10.5 },
+                        ]
+                    },
+                    {
+                        name: "Beverages",
+                        color: "hotpink",
+                        items: [
+                            "Sweet / Unsweetened Tea", "Coke / Diet Coke", "Sprite",
+                            "Bottled Water", "Lemonade", "Orange Juice"
+                        ].map(name => ({ name, price: 2.0 }))
+                    }
+                ];
+
+                categories.forEach(category => {
+                    const title = document.createElement('h4');
+                    title.textContent = category.name;
+                    title.style.color = category.color;
+                    title.style.gridColumn = '1 / -1';
+                    title.style.marginTop = '15px';
+                    menuGrid.appendChild(title);
+
+                    category.items.forEach(item => {
+                        const card = document.createElement('div');
+                        card.className = 'menu-item-card';
+                        card.dataset.name = item.name;
+                        card.dataset.price = item.price;
+
+                        card.innerHTML = `
+                            <div class="menu-item-title">${item.name}</div>
+                            <div class="menu-item-price">$${item.price.toFixed(2)}</div>
+                            <div class="quantity-selector" style="display:none;">
+                                <button class="decrease">-</button>
+                                <span class="qty">1</span>
+                                <button class="increase">+</button>
+                            </div>
+                        `;
+
+                        card.addEventListener('click', function () {
+                            card.classList.toggle('selected');
+                            const qtySelector = card.querySelector('.quantity-selector');
+                            qtySelector.style.display = card.classList.contains('selected') ? 'flex' : 'none';
+                        });
+
+                        card.querySelector('.increase').addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const qtyEl = card.querySelector('.qty');
+                            qtyEl.textContent = parseInt(qtyEl.textContent) + 1;
+                        });
+
+                        card.querySelector('.decrease').addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const qtyEl = card.querySelector('.qty');
+                            const newQty = Math.max(1, parseInt(qtyEl.textContent) - 1);
+                            qtyEl.textContent = newQty;
+                        });
+
+                        menuGrid.appendChild(card);
+                    });
+                });
+
+                addItemsModal.style.display = 'block';
+            }
+
+            window.closeAddItemsScreen = function () {
+                addItemsModal.style.display = 'none';
+            };
+
+            window.finishAddingItems = function () {
+                const selectedCards = menuGrid.querySelectorAll('.menu-item-card.selected');
+
+                selectedCards.forEach(card => {
+                    const name = card.dataset.name;
+                    const price = parseFloat(card.dataset.price);
+                    const qty = parseInt(card.querySelector('.qty').textContent);
+
+                    const existing = [...orderedItemsList.querySelectorAll('.item')]
+                        .find(item => item.dataset.name === name);
+
+                    if (existing) {
+                        // If already exists, increase quantity
+                        const currentQty = parseInt(existing.dataset.qty);
+                        const newQty = currentQty + qty;
+                        existing.dataset.qty = newQty;
+                        existing.querySelector('.qty-count').textContent = newQty;
+                        existing.querySelector('.editable-price').textContent = (newQty * price).toFixed(2);
+                    } else {
+                        // Add new item entry
+                        const itemEntry = document.createElement('div');
+                        itemEntry.className = 'item';
+                        itemEntry.dataset.price = price;
+                        itemEntry.dataset.qty = qty;
+                        itemEntry.dataset.name = name;
+
+                        itemEntry.innerHTML = `
+                            <span>
+                                ${name} ×
+                                <span class="qty-count">${qty}</span>
+                                <button class="qty-btn plus">+</button>
+                                <button class="qty-btn minus">-</button>
+                            </span>
+                            <span>
+                                $<span class="editable-price">${(qty * price).toFixed(2)}</span>
+                                <span class="remove-item" style="margin-left:10px; cursor:pointer;" title="Remove">🗑️</span>
+                            </span>
+                        `;
+
+                        // Event listeners for +/-
+                        itemEntry.querySelector('.plus').addEventListener('click', () => {
+                            const countEl = itemEntry.querySelector('.qty-count');
+                            let count = parseInt(countEl.textContent);
+                            count++;
+                            countEl.textContent = count;
+                            itemEntry.dataset.qty = count;
+                            itemEntry.querySelector('.editable-price').textContent = (count * price).toFixed(2);
+                            updateOrderSummary();
+                        });
+
+                        itemEntry.querySelector('.minus').addEventListener('click', () => {
+                            const countEl = itemEntry.querySelector('.qty-count');
+                            let count = parseInt(countEl.textContent);
+                            if (count > 1) {
+                                count--;
+                                countEl.textContent = count;
+                                itemEntry.dataset.qty = count;
+                                itemEntry.querySelector('.editable-price').textContent = (count * price).toFixed(2);
+                                updateOrderSummary();
+                            }
+                        });
+
+                        itemEntry.querySelector('.remove-item').addEventListener('click', () => {
+                            itemEntry.remove();
+                            updateOrderSummary();
+                        });
+
+                        orderedItemsList.appendChild(itemEntry);
+                    }
+                });
+
+                updateOrderSummary();
+                closeAddItemsScreen();
+            };
+        });
+
+        function sendOrderToServer(tableID, items) {
+            fetch('/api/write_order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    table_id: tableID,
+                    items: items
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log("Order saved!");
+                } else {
+                    console.error("Error saving order:", data.message);
+                }
+            })
+            .catch(err => {
+                console.error("Request failed", err);
+            });
+        }
+
         </script>
     </body>
 </html>
