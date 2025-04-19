@@ -126,8 +126,8 @@ nav {
   background-color: #fff8e1;
 }
 
-/* Add this to your CSS */
 .cell.dirty {
+  background-color: #ffebee;
   cursor: not-allowed;
 }
 

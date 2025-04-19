@@ -8,12 +8,19 @@
 <body>
 
     <!-- Orange Navbar -->
-    <div class="navbar">
-        <a href="/">Home</a>
-        <a href="/view_employees">Employees</a>
-        <a href="/add_employee_web">Add Employee</a>
-        <a href="/cookqueue">Cook Queue</a>
-    </div>
+    <nav>
+        <a href="/" class="logo">Plate & Byte</a>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle">Settings</a>
+                <div class="dropdown-menu">
+                    <a href="/profile">Profile</a>
+                    <a href="/">Logout</a>
+                </div>
+            </li>
+        </ul>
+    </nav>
 
     <div class="form-container">
         <h2>Cook Queue</h2>
