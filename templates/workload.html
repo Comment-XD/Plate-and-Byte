@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Employee Workload Report</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/workload.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <div class="navbar">
+        <a href="/">Home</a>
+        <a href="/view_employees">Employees</a>
+        <a href="/add_employee_web">Add Employee</a>
+        <a href="/cookqueue">Cook Queue</a>
+        <a href="/clock">Clock In/Out</a>
+        <a href="/workload" class="active">Workload</a>
+    </div>
+
+    <div class="container">
+        <h2>Employee Workload Overview</h2>
+
+        <!-- Chart -->
+        <canvas id="workChart" width="600" height="300"></canvas>
+
+        <!-- Table of logs -->
+        <h3>Clock In/Out Details</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Clock In</th>
+                    <th>Clock Out</th>
+                    <th>Hours Worked</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ log.username }}</td>
+                    <td>{{ log.clock_in }}</td>
+                    <td>{{ log.clock_out }}</td>
+                    <td>{{ log.hours }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Export Button -->
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="/export_workload" class="download-button">📥 Export to Excel</a>
+        </div>
+    </div>
+
+    <!-- Chart Script -->
+    <script>
+        const ctx = document.getElementById('workChart').getContext('2d');
+        const workChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: {{ summary.keys()|list }},
+                datasets: [{
+                    label: 'Total Hours Worked',
+                    data: {{ summary.values()|list }},
+                    backgroundColor: '#ff7043'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    title: {
+                        display: true,
+                        text: 'Total Hours Worked per Employee'
+                    }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>
