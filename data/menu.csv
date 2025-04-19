@@ -1,0 +1,43 @@
+category,category_color,item_name,price
+Appetizers,red,Chicken Nachos,8
+Appetizers,red,Pork Nachos,8.5
+Appetizers,red,Pork or Chicken Sliders,5
+Appetizers,red,Catfish Bites,6.5
+Appetizers,red,Fried Veggies,6.5
+Salads,green,House Salad,7.5
+Salads,green,Wedge Salad,7.5
+Salads,green,Caesar Salad,7.5
+Salads,green,Sweet Potato Chicken Salad,11.5
+Entrees,blue,Shrimp & Grits,13.5
+Entrees,blue,Sweet Tea Fried Chicken,11.5
+Entrees,blue,Caribbean Chicken,11.5
+Entrees,blue,Grilled Pork Chops,11
+Entrees,blue,New York Strip Steak,17
+Entrees,blue,Seared Tuna,15
+Entrees,blue,Captain Crunch Chicken Tenders,11.5
+Entrees,blue,Shock Top Grouper Fingers,11.5
+Entrees,blue,Mac & Cheese Bar,8.5
+Sides,brown,Curly Fries,2.5
+Sides,brown,Wing Chips,2.5
+Sides,brown,Sweet Potato Fries,2.5
+Sides,brown,Creamy Cabbage Slaw,2.5
+Sides,brown,Adluh Cheese Grits,2.5
+Sides,brown,Mashed Potatoes,2.5
+Sides,brown,Mac & Cheese,2.5
+Sides,brown,Seasonal Vegetables,2.5
+Sides,brown,Baked Beans,2.5
+Sandwiches,sandybrown,Grilled Cheese,5.5
+Sandwiches,sandybrown,Chicken BLT&A,10
+Sandwiches,sandybrown,Philly,13.5
+Sandwiches,sandybrown,Club,10
+Sandwiches,sandybrown,Meatball Sub,10
+Burgers,teal,Bacon Cheeseburger,11
+Burgers,teal,Carolina Burger,11
+Burgers,teal,Portobello Burger (V),8.5
+Burgers,teal,Vegan Boca Burger (V),10.5
+Beverages,hotpink,Sweet / Unsweetened Tea,2
+Beverages,hotpink,Coke / Diet Coke,2
+Beverages,hotpink,Sprite,2
+Beverages,hotpink,Bottled Water,2
+Beverages,hotpink,Lemonade,2
+Beverages,hotpink,Orange Juice,2

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Employee | Plate & Byte</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/employee_detail.css') }}">
+    <style>
+        /* Additional styles for form elements */
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            background-color: #f9f9f9;
+        }
+        .info-value input, .info-value select {
+            border: 1px solid #ccc;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        .info-value {
+            width: 70%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <a href="/" class="logo">Plate & Byte</a>
+            <ul class="nav-links">
+                <li><a href="{{url_for('manager')}}">Dashboard</a></li>
+                <li><a href="/view_employees">Employees</a></li>
+                <li><a href="#">Menu</a></li>
+                <li><a href="#">Reports</a></li>
+            </ul>
+        </nav>
+
+        <!-- Success / Error Flash Message -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="flash-message {{ category }}">
+                <p>{{ message }}</p>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <div class="content-wrapper">
+            <!-- Main Employee Info -->
+            <div class="detail-container">
+                <h2 class="page-title">Edit <span>Employee</span></h2>
+                
+                <form method="POST" action="{{ url_for('edit_employee', employee_id=employee.id) }}">
+                    <div class="employee-info">
+                        <div class="info-row">
+                            <div class="info-label">ID:</div>
+                            <div class="info-value">{{ employee.id }}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Username:</div>
+                            <div class="info-value">
+                                <input type="text" id="username" name="username" value="{{ employee.username }}" required>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Name:</div>
+                            <div class="info-value">
+                                <input type="text" id="name" name="name" value="{{ employee.name }}" required>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Password:</div>
+                            <div class="info-value">
+                                <input type="text" id="password" name="password" value="{{ employee.password }}" required>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Role:</div>
+                            <div class="info-value">
+                                <select id="role" name="role" required>
+                                    <option value="Manager" {% if employee.role == 'Manager' %}selected{% endif %}>Manager</option>
+                                    <option value="Cook" {% if employee.role == 'Cook' %}selected{% endif %}>Cook</option>
+                                    <option value="Waiter" {% if employee.role == 'Waiter' %}selected{% endif %}>Waiter</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" class="btn">Save Changes</button>
+                        <a href="/employee/{{ employee.id }}" class="btn secondary-btn">Cancel</a>
+                    </div>
+                </form>
+
+                <a href="/view_employees" class="btn secondary-btn">Back to Employee List</a>
+            </div>
+        </div>
+
+        <footer>
+            <div class="footer-content">
+                <div class="footer-logo">Plate & Byte</div>
+                <ul class="footer-links">
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Terms of Service</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                </ul>
+            </div>
+            <div class="copyright">
+                &copy; 2025 Plate & Byte. All rights reserved.
+            </div>
+        </footer>
+    </div>
+
+    <!-- JavaScript for Flash Fade -->
+    <script>
+        // Auto-fade success/error messages after 3 seconds
+        setTimeout(function() {
+            var flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(function(flash) {
+                flash.style.opacity = '0';
+            });
+        }, 3000);
+    </script>
+</body>
+</html>

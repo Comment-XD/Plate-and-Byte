@@ -13,6 +13,7 @@ class Restaurant:
         self.employees = []
         self.level2Access = ["Manager", "Admin"]
         self.level3Access = ["Admin"]
+        self.curr_emp_id = 0
 
     def generateID(self):
         return len(self.employees) + 1
@@ -24,7 +25,6 @@ class Restaurant:
             os.makedirs('data')
 
         employee_file_path = os.path.join('data', 'employee.csv')
-        users_file_path = os.path.join('data', 'users.csv')
         manager_file_path = os.path.join('data', 'managers.csv')
         waiter_file_path = os.path.join('data', 'waiters.csv')
 
@@ -34,13 +34,14 @@ class Restaurant:
         waiter_fieldnames = ['id', 'username', 'name', 'password']
 
         employee_file_exists = os.path.isfile(employee_file_path)
-        users_file_exists = os.path.isfile(users_file_path)
+        manager_file_exists = os.path.isfile(manager_file_path)
+        waiter_file_exists = os.path.isfile(waiter_file_path)
 
         # ✅ Correct way to get full name now
         full_name = employee.name
 
         # Write to employee.csv
-        with open(employee_file_path, mode='a', newline='') as emp_csv:
+        with open(employee_file_path, mode='a', newline='\n') as emp_csv:
             employee_writer = csv.DictWriter(emp_csv, fieldnames=employee_fieldnames)
             if not employee_file_exists:
                 employee_writer.writeheader()
@@ -54,24 +55,11 @@ class Restaurant:
             })
             
         
-        # Write to users.csv
-        with open(users_file_path, mode='a', newline='') as user_csv:
-            user_writer = csv.DictWriter(user_csv, fieldnames=user_fieldnames)
-            if not users_file_exists:
-                user_writer.writeheader()
-
-            user_writer.writerow({
-                'id': employee.id,
-                'username': employee.username,
-                'password': employee.password,
-                'role': employee.role
-            })
-        
         # Write to managers.csv 
         if isinstance(employee, Manager):
             with open(manager_file_path, mode='a', newline='') as manager_csv:
                 manager_writer = csv.DictWriter(manager_csv, fieldnames=manager_fieldnames)
-                if not users_file_exists:
+                if not manager_file_exists:
                     manager_writer.writeheader()
 
                 manager_writer.writerow({
@@ -85,7 +73,7 @@ class Restaurant:
         elif isinstance(employee, Waiter):
             with open(waiter_file_path, mode='a', newline='') as waiter_csv:
                 waiter_writer = csv.DictWriter(waiter_csv, fieldnames=waiter_fieldnames)
-                if not users_file_exists:
+                if not waiter_file_exists:
                     waiter_writer.writeheader()
 
                 waiter_writer.writerow({
@@ -95,18 +83,18 @@ class Restaurant:
                     'name': employee.name
                 })
                 
-        elif isinstance(employee, Cook):
-            with open(users_file_path, mode='a', newline='') as cook_csv:
-                cook_writer = csv.DictWriter(cook_csv, fieldnames=user_fieldnames)
-                if not users_file_exists:
-                    cook_writer.writeheader()
+        # elif isinstance(employee, Cook):
+        #     with open(users_file_path, mode='a', newline='') as cook_csv:
+        #         cook_writer = csv.DictWriter(cook_csv, fieldnames=user_fieldnames)
+        #         if not users_file_exists:
+        #             cook_writer.writeheader()
 
-                cook_writer.writerow({
-                    'id': employee.id,
-                    'username': employee.username,
-                    'password': employee.password,
-                    'name': employee.name
-                })
+        #         cook_writer.writerow({
+        #             'id': employee.id,
+        #             'username': employee.username,
+        #             'password': employee.password,
+        #             'name': employee.name
+        #         })
                 
             
 
@@ -171,6 +159,8 @@ class Restaurant:
                     employee = CrewMember(name, emp_id, username, password, role)
 
                 self.employees.append(employee)
+            
+            self.curr_emp_id = self.employees[-1].id
 
         print(f"Loaded {len(self.employees)} employees from employee.csv.")
 

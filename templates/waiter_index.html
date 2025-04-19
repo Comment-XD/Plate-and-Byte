@@ -14,16 +14,17 @@
             <ul class="nav-links">
                 <li><a href="#">Menu</a></li>
                 <li><a href="#">Reports</a></li>
-                <li><a href="#">Settings</a></li>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle">Settings</a>
+                    <div class="dropdown-menu">
+                        <a href="/profile">Profile</a>
+                        <a href="/">Logout</a>
+                    </div>
+                </li> 
             </ul>
         </nav>
         
         <h1 class="page-title">Restaurant <span>Floor Plan</span></h1>
-        
-        <!-- Edit Mode Banner -->
-        <div id="editModeBanner" class="edit-mode-banner">
-            You are in layout edit mode. Click "Save Layout" when finished.
-        </div>
         
         <div class="main-content">
             <div class="sidebar">
@@ -40,15 +41,13 @@
                     <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #F44336; margin-right: 10px;"></div>
                     <span>Dirty</span>
                 </div>
-                <p style="margin-top: 20px; font-size: 0.9rem;">Double-click on a table to assign a waiter and change status</p>
+                <p style="margin-top: 20px; font-size: 0.9rem;">Double-click on a table to change status and add orders</p>
                 
-                <div id="layoutEditHelp" style="margin-top: 20px; display: none;">
-                    <h4>Layout Edit Mode:</h4>
-                    <ul style="padding-left: 20px; font-size: 0.9rem; margin-top: 10px;">
-                        <li>Click on tables to select them</li>
-                        <li>Use "Join Tables" to combine selected tables</li>
-                        <li>Double-click a table to configure seats</li>
-                    </ul>
+                <div class="assigned-tables-section">
+                    <h3 style="margin-top: 30px;">My Assigned Tables</h3>
+                    <div id="assignedTablesList" class="assigned-tables-list">
+                        <p class="loading-text">Loading your assigned tables...</p>
+                    </div>
                 </div>
             </div>
 
@@ -56,9 +55,8 @@
                 {% for i in range(5) %}
                     {% for j in range(5) %}
                         <div class="cell available small" id="table-{{ i*5 + j + 1 }}" data-table-id="{{ i*5 + j + 1 }}" 
-                             data-seats="4" data-size="small" onclick="handleTableClick(this)" ondblclick="openTableModal(this)">
+                             data-seats="4" data-size="small" ondblclick="openTableModal(this)">
                             <div class="status-indicator"></div>
-                            <div class="drag-handle" style="display: none;"></div>
                             <p>Table #{{ i*5 + j + 1 }}</p>
                             <div class="capacity">Seats: 4</div>
                             <div class="seats-indicator">
@@ -77,52 +75,13 @@
     
     <!-- Table Management Modal -->
     <div id="tableModal" class="modal" style="display: none;">
+        <input type="hidden" id="currentWaiterId" value="">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="modalTableTitle">Table #1</h3>
                 <span class="close">&times;</span>
             </div>
             <div class="modal-body">
-                <!-- Table Configuration Section (shown in edit mode) -->
-                <div id="tableConfigSection" style="display: none;">
-                    <div class="table-config-section">
-                        <h4>Table Size</h4>
-                        <div class="table-size-options">
-                            <label class="size-option">
-                                <input type="radio" name="tableSize" value="small" checked>
-                                <span>Small (2-4 seats)</span>
-                            </label>
-                            <label class="size-option">
-                                <input type="radio" name="tableSize" value="medium">
-                                <span>Medium (4-6 seats)</span>
-                            </label>
-                            <label class="size-option">
-                                <input type="radio" name="tableSize" value="large">
-                                <span>Large (8+ seats)</span>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="table-config-section">
-                        <h4>Number of Seats</h4>
-                        <div class="seat-counter">
-                            <button type="button" id="decreaseSeats">-</button>
-                            <span id="seatCount">4</span>
-                            <button type="button" id="increaseSeats">+</button>
-                        </div>
-                    </div>
-                    
-                    <div id="joinTablesSection" class="join-tables-section" style="display: none;">
-                        <h4>Joined Tables</h4>
-                        <p>This table is joined with:</p>
-                        <div id="joinedTablesList" class="joined-tables-list">
-                            <!-- Joined tables will be listed here -->
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Regular Table Status Section -->
-
                 <!-- Ordered Items Section -->
                 <div id="orderedItemsSection" style="margin-bottom: 20px;">
                     <h4>Ordered Items</h4>
@@ -134,10 +93,10 @@
                         <span>Total Items: <span id="totalItems">0</span></span>
                         <span>Total Price: $<span id="totalPrice">0.00</span></span>
                     </div>
-                    <button id="addItemsBtn" class="primary">Add Items</button>
+                    <button id="addItemsBtn" class="primary" style="margin-top: 10px; width: 100%;">Add Items</button>
                 </div>
 
-
+                <!-- Regular Table Status Section -->
                 <div id="tableStatusSection">
                     <h4>Change Status</h4>
                     <div class="status-options">
@@ -157,17 +116,10 @@
                             <span>Dirty</span>
                         </label>
                     </div>
-                    
-                    <h4>Assign Waiter</h4>
-                    <select id="waiterSelect" style="width: 100%; padding: 8px; margin-top: 5px; border-radius: 4px; border: 1px solid #ddd;">
-                        <option value="">Select a waiter</option>
-                        <!-- Waiters will be loaded here -->
-                    </select>
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="secondary" onclick="closeModal()">Cancel</button>
-                <button id="saveTableConfigBtn" class="primary" style="display: none;" onclick="saveTableConfig()">Save Configuration</button>
                 <button id="saveTableStatusBtn" class="primary" onclick="saveTableChanges()">Save Changes</button>
             </div>
         </div>
@@ -192,931 +144,448 @@
         </div>
     </div>
 
-
     <footer>
         <div class="container">
-            <div class="footer-content">
-                <div class="footer-logo">Plate & Byte</div>
-            </div>
             <div class="copyright">
                 &copy; 2025 Plate & Byte. All rights reserved.
             </div>
         </div>
     </footer>
-
-
+    
 
     <script>
-    const tableOrders = {};
-    const tableData = {};
-    let currentTableId = null;
-    const modal = document.getElementById('tableModal');
-    const modalTitle = document.getElementById('modalTableTitle');
-    const waiterSelect = document.getElementById('waiterSelect');
-
-    const orderedItemsList = document.getElementById('orderedItemsList');
-    const totalItemsEl = document.getElementById('totalItems');
-    const totalPriceEl = document.getElementById('totalPrice');
-    const placeholder = document.getElementById('noItemsPlaceholder');
-    
-    // Layout editing variables
-    let isEditMode = false;
-    let selectedTables = [];
-    let joinedTables = {};
-    let originalLayout = null;
-    
-    // DOM Elements
-    const editLayoutBtn = document.getElementById('editLayoutBtn');
-    const addTableBtn = document.getElementById('addTableBtn');
-    const joinTablesBtn = document.getElementById('joinTablesBtn');
-    const saveLayoutBtn = document.getElementById('saveLayoutBtn');
-    const cancelEditBtn = document.getElementById('cancelEditBtn');
-    const editModeBanner = document.getElementById('editModeBanner');
-    const layoutEditHelp = document.getElementById('layoutEditHelp');
-    const seatingGrid = document.getElementById('seatingGrid');
-    
-    // Table configuration elements
-    const tableConfigSection = document.getElementById('tableConfigSection');
-    const tableStatusSection = document.getElementById('tableStatusSection');
-    const saveTableConfigBtn = document.getElementById('saveTableConfigBtn');
-    const saveTableStatusBtn = document.getElementById('saveTableStatusBtn');
-    const decreaseSeatsBtn = document.getElementById('decreaseSeats');
-    const increaseSeatsBtn = document.getElementById('increaseSeats');
-    const seatCountEl = document.getElementById('seatCount');
-    const joinTablesSection = document.getElementById('joinTablesSection');
-    const joinedTablesList = document.getElementById('joinedTablesList');
-    
-    // Close modal when clicking on X
-    document.querySelector('.close').addEventListener('click', closeModal);
-    
-    // Close modal when clicking outside
-    window.addEventListener('click', function(event) {
-        if (event.target === modal) {
-            closeModal();
-        }
-    });
-    
-    // Load waiters when the page loads
-    document.addEventListener('DOMContentLoaded', function() {
-        loadWaiters();
-        loadTableData();
-        setupEventListeners();
-    });
-
-    function rebindTableEvents() {
-        document.querySelectorAll('.cell').forEach(cell => {
-            cell.onclick = function () { handleTableClick(this); };
-            cell.ondblclick = function () { openTableModal(this); };
-        });
-    }
-
-    function updateOrderSummary() {
-        const items = orderedItemsList.querySelectorAll('.item');
-        let totalItems = 0;
-        let totalPrice = 0;
-
-        items.forEach(item => {
-            const qty = parseInt(item.dataset.qty);
-            const price = parseFloat(item.dataset.price);
-            totalItems += qty;
-            totalPrice += qty * price;
-        });
-
-        totalItemsEl.textContent = totalItems;
-        totalPriceEl.textContent = totalPrice.toFixed(2);
-
-        placeholder.style.display = items.length === 0 ? 'block' : 'none';
-    }
-
-    function setupEventListeners() {
-        // Layout control buttons
-        editLayoutBtn.addEventListener('click', toggleEditMode);
-        addTableBtn.addEventListener('click', addNewTable);
-        joinTablesBtn.addEventListener('click', joinSelectedTables);
-        saveLayoutBtn.addEventListener('click', saveLayout);
-        cancelEditBtn.addEventListener('click', cancelEdit);
+        const tableOrders = {};
+        const tableData = {};
+        let currentTableId = null;
+        let currentWaiterId = null;
+        let currentWaiterName = null;
+        const modal = document.getElementById('tableModal');
+        const modalTitle = document.getElementById('modalTableTitle');
+        const orderedItemsList = document.getElementById('orderedItemsList');
+        const totalItemsEl = document.getElementById('totalItems');
+        const totalPriceEl = document.getElementById('totalPrice');
+        const placeholder = document.getElementById('noItemsPlaceholder');
         
-        // Seat counter buttons
-        decreaseSeatsBtn.addEventListener('click', function() {
-            let count = parseInt(seatCountEl.textContent);
-            if (count > 2) {
-                seatCountEl.textContent = count - 1;
-                updateSeatsIndicator(count - 1);
-            }
-        });
-        
-        increaseSeatsBtn.addEventListener('click', function() {
-            let count = parseInt(seatCountEl.textContent);
-            if (count < 12) {
-                seatCountEl.textContent = count + 1;
-                updateSeatsIndicator(count + 1);
-            }
-        });
-        
-        // Table size radio buttons
-        document.querySelectorAll('input[name="tableSize"]').forEach(radio => {
-            radio.addEventListener('change', function() {
-                updateTableSizePreview(this.value);
+        // Load waiters when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTableData();
+            getCurrentWaiterInfo();
+            
+            // Close modal when clicking on X
+            document.querySelector('.close').addEventListener('click', closeModal);
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', function(event) {
+                if (event.target === modal) {
+                    closeModal();
+                }
             });
         });
-    }
-    
-    function loadWaiters() {
-        fetch('/api/waiters')
-            .then(response => response.json())
-            .then(data => {
-                waiterSelect.innerHTML = '<option value="">Select a waiter</option>';
-                data.forEach(waiter => {
-                    const option = document.createElement('option');
-                    option.value = waiter.username;
-                    option.textContent = waiter.name;
-                    option.dataset.waiterId = waiter.id;
-                    waiterSelect.appendChild(option);
-                });
-            })
-            .catch(error => console.error('Error loading waiters:', error));
-    }
-    
-    function loadTableData() {
-        fetch('/api/tables')
-            .then(response => response.json())
-            .then(data => {
-                data.forEach(table => {
-                    const tableId = table.table_id;
-                    const tableElement = document.getElementById(`table-${tableId}`);
-                    
-                    if (tableElement) {
-                        // Convert status from backend format to frontend format
-                        let status = 'available';
-                        if (table.status === 'Occupied') status = 'occupied';
-                        else if (table.status === 'Dirty') status = 'dirty';
+        
+        function rebindTableEvents() {
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.ondblclick = function () { 
+                    // Check if the table is dirty
+                    if (cell.classList.contains('dirty')) {
+                        // Show a notification that dirty tables can't be accessed
+                        alert('This table is dirty and needs to be cleaned before taking orders.');
+                        return; // Prevent opening the modal
+                    }
+                    // If not dirty, proceed with opening the modal
+                    openTableModal(this); 
+                };
+            });
+        }        
+        
+        function updateOrderSummary() {
+            const items = orderedItemsList.querySelectorAll('.item');
+            let totalItems = 0;
+            let totalPrice = 0;
+        
+            items.forEach(item => {
+                const qty = parseInt(item.dataset.qty);
+                const price = parseFloat(item.dataset.price);
+                totalItems += qty;
+                totalPrice += qty * price;
+            });
+        
+            totalItemsEl.textContent = totalItems;
+            totalPriceEl.textContent = totalPrice.toFixed(2);
+        
+            placeholder.style.display = items.length === 0 ? 'block' : 'none';
+        }
+        
+        function getCurrentWaiterInfo() {
+            // Fetch the current logged-in waiter information
+            fetch('/api/current_waiter')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        currentWaiterId = data.waiter_id;
+                        currentWaiterName = data.waiter_name;
+                        console.log(`Logged in as waiter: ${currentWaiterName} (ID: ${currentWaiterId})`);
                         
-                        // Update table class and status indicator
-                        tableElement.className = `cell ${status} ${tableElement.dataset.size || 'small'}`;
-                        const statusIndicator = tableElement.querySelector('.status-indicator');
-                        statusIndicator.className = `status-indicator ${status}`;
+                        // After getting waiter info, update the assigned tables list
+                        updateAssignedTablesList();
+                    } else {
+                        console.error('Error getting current waiter info:', data.message);
+                    }
+                })
+                .catch(error => console.error('Error fetching current waiter info:', error));
+        }
+        
+        function updateAssignedTablesList() {
+            const assignedTablesList = document.getElementById('assignedTablesList');
+            
+            // Get the current waiter ID from the session or a global variable
+            fetch('/api/current_waiter')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        currentWaiterId = data.waiter_id;
                         
-                        // Update waiter info if assigned
-                        if (table.waiter_id) {
-                            const waiterInfoElement = document.getElementById(`waiter-info-${tableId}`);
-                            // You would need to fetch waiter name based on ID
-                            // For now, just show the ID
-                            waiterInfoElement.textContent = `Waiter ID: ${table.waiter_id}`;
+                        // Filter the tableData to find tables assigned to this waiter
+                        const assignedTables = Object.keys(tableData).filter(tableId => 
+                            tableData[tableId].waiter_id === currentWaiterId
+                        );
+                        
+                        // If no tables are assigned, show a message
+                        if (assignedTables.length === 0) {
+                            assignedTablesList.innerHTML = '<p>No tables currently assigned to you</p>';
+                            return;
                         }
                         
-                        // Store table data
-                        tableData[tableId] = {
-                            status: status,
-                            waiter_id: table.waiter_id || '',
-                            seats: parseInt(tableElement.dataset.seats) || 4,
-                            size: tableElement.dataset.size || 'small',
-                            joined: tableElement.classList.contains('joined')
-                        };
+                        // Create the HTML for the assigned tables list
+                        let html = '<ul class="assigned-tables">';
+                        
+                        assignedTables.forEach(tableId => {
+                            const table = tableData[tableId];
+                            const statusClass = table.status; // available, occupied, or dirty
+                            const statusText = table.status.charAt(0).toUpperCase() + table.status.slice(1);
+                            
+                            html += `
+                                <li class="assigned-table-item" onclick="highlightTable('${tableId}')">
+                                    <div class="table-indicator">
+                                        <div class="status-dot ${statusClass}"></div>
+                                        <span>Table #${tableId}</span>
+                                    </div>
+                                    <div class="table-status">${statusText}</div>
+                                </li>
+                            `;
+                        });
+                        
+                        html += '</ul>';
+                        assignedTablesList.innerHTML = html;
+                    } else {
+                        assignedTablesList.innerHTML = '<p>Please log in to see your assigned tables</p>';
                     }
+                })
+                .catch(error => {
+                    console.error('Error getting current waiter:', error);
+                    assignedTablesList.innerHTML = '<p>Error loading assigned tables</p>';
                 });
-            })
-            .catch(error => console.error('Error loading tables:', error));
-    }
-    
-    function handleTableClick(element) {
-        if (isEditMode) {
-            // In edit mode, clicking selects/deselects tables
-            toggleTableSelection(element);
-        } else {
-            // Regular mode functionality if needed
-        }
-    }
-    
-    function toggleTableSelection(element) {
-        const tableId = element.dataset.tableId;
-        
-        if (element.classList.contains('selected')) {
-            // Deselect table
-            element.classList.remove('selected');
-            selectedTables = selectedTables.filter(id => id !== tableId);
-        } else {
-            // Select table
-            element.classList.add('selected');
-            selectedTables.push(tableId);
         }
         
-        // Enable/disable join button based on selection
-        joinTablesBtn.disabled = selectedTables.length < 2;
-    }
-    
-    function openTableModal(element) {
-        const tableId = element.dataset.tableId;
-
-        console.log("Opening modal for Table:", tableId);
-
-        currentTableId = tableId;
-        modalTitle.textContent = `Table #${tableId}`;
-        
-        if (isEditMode) {
-            // In edit mode, show table configuration options
-            tableConfigSection.style.display = 'block';
-            tableStatusSection.style.display = 'none';
-            saveTableConfigBtn.style.display = 'block';
-            saveTableStatusBtn.style.display = 'none';
+        function highlightTable(tableId) {
+            // Get the table element
+            const tableElement = document.getElementById(`table-${tableId}`);
             
-            // Set current table size
-            const currentSize = element.dataset.size || 'small';
-            document.querySelector(`input[name="tableSize"][value="${currentSize}"]`).checked = true;
-            
-            // Set current seat count
-            const seatCount = parseInt(element.dataset.seats) || 4;
-            seatCountEl.textContent = seatCount;
-            
-            // Check if this is a joined table
-            if (element.classList.contains('joined')) {
-                joinTablesSection.style.display = 'block';
-                updateJoinedTablesList(tableId);
-            } else {
-                joinTablesSection.style.display = 'none';
+            // Check if the table is dirty
+            if (tableElement && tableElement.classList.contains('dirty')) {
+                alert('This table is dirty and needs to be cleaned before taking orders.');
+                return;
             }
-        } else {
+            
+            // Remove highlight from all tables
+            document.querySelectorAll('.cell').forEach(table => {
+                table.classList.remove('highlighted');
+            });
+            
+            // Add highlight to the selected table
+            if (tableElement) {
+                tableElement.classList.add('highlighted');
+                
+                // Scroll to the table if needed
+                tableElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+        
+        function loadTableData() {
+            fetch('/api/tables')
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(table => {
+                        const tableId = table.table_id;
+                        const tableElement = document.getElementById(`table-${tableId}`);
+                        
+                        if (tableElement) {
+                            // Convert status from backend format to frontend format
+                            let status = 'available';
+                            if (table.status === 'Occupied') status = 'occupied';
+                            else if (table.status === 'Dirty') status = 'dirty';
+                            
+                            // Update table class and status indicator
+                            tableElement.className = `cell ${status} ${tableElement.dataset.size || 'small'}`;
+                            const statusIndicator = tableElement.querySelector('.status-indicator');
+                            statusIndicator.className = `status-indicator ${status}`;
+                            
+                            // Update waiter info if assigned
+                            const waiterInfoElement = document.getElementById(`waiter-info-${tableId}`);
+                            if (table.waiter_id && table.waiter_name) {
+                                waiterInfoElement.textContent = `Waiter: ${table.waiter_name}`;
+                            } else if (table.waiter_id) {
+                                waiterInfoElement.textContent = `Waiter ID: ${table.waiter_id}`;
+                            } else {
+                                waiterInfoElement.textContent = '';
+                            }
+                            
+                            // Store table data
+                            tableData[tableId] = {
+                                status: status,
+                                waiter_id: table.waiter_id || '',
+                                waiter_name: table.waiter_name || '',
+                                seats: parseInt(tableElement.dataset.seats) || 4,
+                                size: tableElement.dataset.size || 'small'
+                            };
+                        }
+                    });
+                    
+                    // Add this code to bind the ondblclick event with dirty table check
+                    document.querySelectorAll('.cell').forEach(cell => {
+                        cell.ondblclick = function () {
+                            if (cell.classList.contains('dirty')) {
+                                alert('This table is dirty and needs to be cleaned before taking orders.');
+                                return;
+                            }
+                            openTableModal(this);
+                        };
+                    });
+                    
+                    // After loading all table data, update the assigned tables list
+                    updateAssignedTablesList();
+                    
+                    // Load existing orders for all tables
+                    loadExistingOrders();
+                })
+                .catch(error => console.error('Error loading tables:', error));
+        }
+        
+        
+        // New function to load existing orders
+        function loadExistingOrders() {
+            fetch('/api/orders')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.orders) {
+                        // Store orders in tableOrders object
+                        data.orders.forEach(order => {
+                            if (order.table_id && order.items) {
+                                tableOrders[order.table_id] = order.items;
+                            }
+                        });
+                        console.log('Loaded existing orders:', tableOrders);
+                    }
+                })
+                .catch(error => console.error('Error loading orders:', error));
+        }
+        
+        function openTableModal(element) {
+            const tableId = element.dataset.tableId;
+            
+            console.log("Opening modal for Table:", tableId);
+            
+            currentTableId = tableId;
+            modalTitle.textContent = `Table #${tableId}`;
+            
+            // Set the current waiter ID
+            document.getElementById('currentWaiterId').value = currentWaiterId || '';
+            
             // Regular mode - show status options
-            tableConfigSection.style.display = 'none';
-            tableStatusSection.style.display = 'block';
-            saveTableConfigBtn.style.display = 'none';
-            saveTableStatusBtn.style.display = 'block';
+            document.getElementById('tableStatusSection').style.display = 'block';
+            document.getElementById('saveTableStatusBtn').style.display = 'block';
             
             // Set current status in modal
             const currentStatus = element.classList.contains('occupied') ? 'occupied' : 
                                 element.classList.contains('dirty') ? 'dirty' : 'available';
             
             document.querySelector(`input[name="tableStatus"][value="${currentStatus}"]`).checked = true;
-            
-            // Set current waiter in modal if assigned
-            if (tableData[tableId] && tableData[tableId].waiter) {
-                waiterSelect.value = tableData[tableId].waiter;
-            } else {
-                waiterSelect.value = "";
-            }
-        }
-
-        // Clear previous list
-        orderedItemsList.innerHTML = '';
-        totalItemsEl.textContent = '0';
-        totalPriceEl.textContent = '0.00';
-        placeholder.style.display = 'block';
-
-        // Load saved items for this table, if any
-        const savedItems = tableOrders[tableId];
-        if (savedItems && savedItems.length > 0) {
-            placeholder.style.display = 'none';
-            savedItems.forEach(item => {
-                const itemEntry = document.createElement('div');
-                itemEntry.className = 'item';
-                itemEntry.dataset.name = item.food_item;
-                itemEntry.dataset.price = item.price;
-                itemEntry.dataset.qty = item.total_quantity;
-
-                itemEntry.innerHTML = `
-                    <span>
-                        ${item.food_item} ×
-                        <span class="qty-count">${item.total_quantity}</span>
-                        <button class="qty-btn plus">+</button>
-                        <button class="qty-btn minus">-</button>
-                    </span>
-                    <span>
-                        $<span class="editable-price">${item.total_price.toFixed(2)}</span>
-                        <span class="remove-item" style="margin-left:10px; cursor:pointer;" title="Remove">🗑️</span>
-                    </span>
-                `;
-
-                // Re-attach plus/minus/remove event listeners
-                itemEntry.querySelector('.plus').addEventListener('click', () => {
-                    const countEl = itemEntry.querySelector('.qty-count');
-                    let count = parseInt(countEl.textContent);
-                    count++;
-                    countEl.textContent = count;
-                    itemEntry.dataset.qty = count;
-                    itemEntry.querySelector('.editable-price').textContent = (count * item.price).toFixed(2);
-                    updateOrderSummary();
-                });
-
-                itemEntry.querySelector('.minus').addEventListener('click', () => {
-                    const countEl = itemEntry.querySelector('.qty-count');
-                    let count = parseInt(countEl.textContent);
-                    if (count > 1) {
-                        count--;
+        
+            // Clear previous list
+            orderedItemsList.innerHTML = '';
+            totalItemsEl.textContent = '0';
+            totalPriceEl.textContent = '0.00';
+            placeholder.style.display = 'block';
+        
+            // Load saved items for this table, if any
+            const savedItems = tableOrders[tableId];
+            if (savedItems && savedItems.length > 0) {
+                placeholder.style.display = 'none';
+                
+                savedItems.forEach(item => {
+                    const itemEntry = document.createElement('div');
+                    itemEntry.className = 'item';
+                    itemEntry.dataset.name = item.food_item;
+                    itemEntry.dataset.price = item.price;
+                    itemEntry.dataset.qty = item.total_quantity;
+        
+                    itemEntry.innerHTML = `
+                        <span>
+                            ${item.food_item} ×
+                            <span class="qty-count">${item.total_quantity}</span>
+                            <button class="qty-btn plus">+</button>
+                            <button class="qty-btn minus">-</button>
+                        </span>
+                        <span>
+                            $<span class="editable-price">${item.total_price.toFixed(2)}</span>
+                            <span class="remove-item" style="margin-left:10px; cursor:pointer;" title="Remove">🗑️</span>
+                        </span>
+                    `;
+        
+                    // Event listeners for +/-
+                    itemEntry.querySelector('.plus').addEventListener('click', () => {
+                        const countEl = itemEntry.querySelector('.qty-count');
+                        let count = parseInt(countEl.textContent);
+                        count++;
                         countEl.textContent = count;
                         itemEntry.dataset.qty = count;
                         itemEntry.querySelector('.editable-price').textContent = (count * item.price).toFixed(2);
                         updateOrderSummary();
-                    }
+                    });
+        
+                    itemEntry.querySelector('.minus').addEventListener('click', () => {
+                        const countEl = itemEntry.querySelector('.qty-count');
+                        let count = parseInt(countEl.textContent);
+                        if (count > 1) {
+                            count--;
+                            countEl.textContent = count;
+                            itemEntry.dataset.qty = count;
+                            itemEntry.querySelector('.editable-price').textContent = (count * item.price).toFixed(2);
+                            updateOrderSummary();
+                        }
+                    });
+        
+                    itemEntry.querySelector('.remove-item').addEventListener('click', () => {
+                        itemEntry.remove();
+                        updateOrderSummary();
+                    });
+        
+                    orderedItemsList.appendChild(itemEntry);
                 });
-
-                itemEntry.querySelector('.remove-item').addEventListener('click', () => {
-                    itemEntry.remove();
-                    updateOrderSummary();
-                });
-
-                orderedItemsList.appendChild(itemEntry);
-            });
-
-            updateOrderSummary();
-}
-
-        modal.style.display = 'block';
-    }
-    
-    function closeModal() {
-        modal.style.display = 'none';
-        currentTableId = null;
-    }
-    
-    function saveTableChanges() {
-        if (!currentTableId) return;
+                
+                updateOrderSummary();
+            }
         
-        const tableElement = document.getElementById(`table-${currentTableId}`);
-        const statusIndicator = tableElement.querySelector('.status-indicator');
-        const waiterInfoElement = document.getElementById(`waiter-info-${currentTableId}`);
-        
-        // Get selected status
-        const selectedStatus = document.querySelector('input[name="tableStatus"]:checked').value;
-        
-        // Get selected waiter
-        const selectedWaiter = waiterSelect.value;
-        const selectedWaiterName = selectedWaiter ? waiterSelect.options[waiterSelect.selectedIndex].text : '';
-        
-        // Get the waiter ID from the data attribute
-        const selectedWaiterId = selectedWaiter ? 
-            waiterSelect.options[waiterSelect.selectedIndex].dataset.waiterId : '';
-
-        // Get table orders
-        const items = [];
-
-        document.querySelectorAll('.ordered-items-list .item').forEach(item => {
-            const name = item.dataset.name;
-            const price = parseFloat(item.dataset.price);
-            const qty = parseInt(item.dataset.qty);
-            const total = price * qty;
-
-            items.push({
-                food_item: name,
-                price: price,
-                total_quantity: qty,
-                total_price: total
-            });
-        });
-
-        if (currentTableId && items.length > 0) {
-            tableOrders[currentTableId] = items;
-
-            sendOrderToServer(currentTableId, items);
+            modal.style.display = 'block';
         }
         
-        // Update table data
-        tableData[currentTableId] = {
-            ...tableData[currentTableId],
-            status: selectedStatus,
-            waiter: selectedWaiter,
-            waiterName: selectedWaiterName,
-            waiterId: selectedWaiterId
-        };
-        
-        // Update visual status
-        tableElement.classList.remove('available', 'occupied', 'dirty');
-        tableElement.classList.add(selectedStatus);
-        statusIndicator.className = 'status-indicator ' + selectedStatus;
-        
-        // Update waiter info
-        if (selectedWaiter) {
-            waiterInfoElement.textContent = `Waiter: ${selectedWaiterName}`;
-        } else {
-            waiterInfoElement.textContent = '';
+        function closeModal() {
+            modal.style.display = 'none';
+            currentTableId = null;
         }
         
-        // Send update to server
-        fetch('/api/update_table', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                table_id: currentTableId,
+        function saveTableChanges() {
+            if (!currentTableId) return;
+            
+            const tableElement = document.getElementById(`table-${currentTableId}`);
+            const statusIndicator = tableElement.querySelector('.status-indicator');
+            const waiterInfoElement = document.getElementById(`waiter-info-${currentTableId}`);
+            
+            // Get selected status
+            const selectedStatus = document.querySelector('input[name="tableStatus"]:checked').value;
+            
+            // Get the current waiter ID from the hidden input
+            const waiterId = document.getElementById('currentWaiterId').value;
+            
+            // Get table orders
+            const items = [];
+        
+            document.querySelectorAll('.ordered-items-list .item').forEach(item => {
+                const name = item.dataset.name;
+                const price = parseFloat(item.dataset.price);
+                const qty = parseInt(item.dataset.qty);
+                const total = price * qty;
+        
+                items.push({
+                    food_item: name,
+                    price: price,
+                    total_quantity: qty,
+                    total_price: total
+                });
+            });
+        
+            if (currentTableId && items.length > 0) {
+                tableOrders[currentTableId] = items;
+                sendOrderToServer(currentTableId, items);
+            }
+            
+            // Update table data
+            tableData[currentTableId] = {
+                ...tableData[currentTableId],
                 status: selectedStatus,
-                waiter_id: selectedWaiterId
-            }),
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Success:', data);
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
-        
-        closeModal();
-        rebindTableEvents();
-    }
-    
-    function saveTableConfig() {
-        if (!currentTableId) return;
-        
-        const tableElement = document.getElementById(`table-${currentTableId}`);
-        
-        // Get selected size
-        const selectedSize = document.querySelector('input[name="tableSize"]:checked').value;
-        
-        // Get seat count
-        const seatCount = parseInt(seatCountEl.textContent);
-        
-        // Update table element
-        tableElement.classList.remove('small', 'medium', 'large');
-        tableElement.classList.add(selectedSize);
-        tableElement.dataset.size = selectedSize;
-        tableElement.dataset.seats = seatCount;
-        
-        // Update capacity display
-        const capacityEl = tableElement.querySelector('.capacity');
-        capacityEl.textContent = `Seats: ${seatCount}`;
-        
-        // Update seats indicator
-        updateTableSeatsIndicator(tableElement, seatCount);
-        
-        // Update table data
-        tableData[currentTableId] = {
-            ...tableData[currentTableId],
-            size: selectedSize,
-            seats: seatCount
-        };
-        
-        // Send update to server
-        fetch('/api/update_table_config', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                table_id: currentTableId,
-                size: selectedSize,
-                seats: seatCount,
-                joined_with: joinedTables[currentTableId] || []
-            }),
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Configuration saved:', data);
-        })
-        .catch((error) => {
-            console.error('Error saving configuration:', error);
-        });
-        
-        closeModal();
-    }
-    
-    function toggleEditMode() {
-        isEditMode = !isEditMode;
-        
-        if (isEditMode) {
-            // Enter edit mode
-            editModeBanner.classList.add('active');
-            layoutEditHelp.style.display = 'block';
-            editLayoutBtn.classList.add('active');
-            addTableBtn.disabled = false;
-            saveLayoutBtn.disabled = false;
-            cancelEditBtn.disabled = false;
+                waiter_id: waiterId
+            };
             
-            // Save original layout for cancel operation
-            originalLayout = seatingGrid.innerHTML;
+            // Update visual status
+            tableElement.classList.remove('available', 'occupied', 'dirty');
+            tableElement.classList.add(selectedStatus);
+            statusIndicator.className = 'status-indicator ' + selectedStatus;
             
-            // Show drag handles
-            document.querySelectorAll('.drag-handle').forEach(handle => {
-                handle.style.display = 'block';
+            // Send update to server
+            fetch('/api/update_table', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    table_id: currentTableId,
+                    status: selectedStatus,
+                    waiter_id: waiterId // Use the current waiter ID
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                // Update the assigned tables list
+                updateAssignedTablesList();
+            })
+            .catch((error) => {
+                console.error('Error:', error);
             });
             
-            // Make tables draggable
-            enableDraggableTables();
-        } else {
-            // Exit edit mode
-            exitEditMode();
+            closeModal();
+            rebindTableEvents();
         }
-    }
-    
-    function exitEditMode() {
-        isEditMode = false;
-        editModeBanner.classList.remove('active');
-        layoutEditHelp.style.display = 'none';
-        editLayoutBtn.classList.remove('active');
-        addTableBtn.disabled = true;
-        joinTablesBtn.disabled = true;
-        saveLayoutBtn.disabled = true;
-        cancelEditBtn.disabled = true;
         
-        // Clear selected tables
-        selectedTables = [];
-        document.querySelectorAll('.cell.selected').forEach(table => {
-            table.classList.remove('selected');
-        });
-        
-        // Hide drag handles
-        document.querySelectorAll('.drag-handle').forEach(handle => {
-            handle.style.display = 'none';
-        });
-        
-        // Disable draggable tables
-        disableDraggableTables();
-    }
-    
-    function addNewTable() {
-        // Get the next table ID
-        const tables = document.querySelectorAll('.cell');
-        const nextId = tables.length + 1;
-        
-        // Create new table element
-        const newTable = document.createElement('div');
-        newTable.className = 'cell available small';
-        newTable.id = `table-${nextId}`;
-        newTable.dataset.tableId = nextId;
-        newTable.dataset.seats = 4;
-        newTable.dataset.size = 'small';
-        newTable.onclick = function() { handleTableClick(this); };
-        newTable.ondblclick = function() { openTableModal(this); };
-        
-        // Add table content
-        newTable.innerHTML = `
-            <div class="status-indicator"></div>
-            <div class="drag-handle"></div>
-            <p>Table #${nextId}</p>
-            <div class="capacity">Seats: 4</div>
-            <div class="seats-indicator">
-                <div class="seat"></div>
-                <div class="seat"></div>
-                <div class="seat"></div>
-                <div class="seat"></div>
-            </div>
-            <div class="waiter-info" id="waiter-info-${nextId}"></div>
-        `;
-        
-        // Add to grid
-                // Add to grid
-                seatingGrid.appendChild(newTable);
-                rebindTableEvents();
-        
-                // Make the new table draggable
-                makeDraggable(newTable);
-                
-                // Store table data
-                tableData[nextId] = {
-                    status: 'available',
-                    waiter: '',
-                    waiterName: '',
-                    waiterId: '',
-                    seats: 4,
-                    size: 'small',
-                    joined: false
-                };
-            }
-            
-            function joinSelectedTables() {
-                if (selectedTables.length < 2) return;
-                
-                // Sort selected tables by ID for consistency
-                selectedTables.sort((a, b) => parseInt(a) - parseInt(b));
-                
-                // The first table becomes the primary table
-                const primaryTableId = selectedTables[0];
-                const primaryTable = document.getElementById(`table-${primaryTableId}`);
-                
-                // Mark the primary table as joined
-                primaryTable.classList.add('joined');
-                
-                // Add join indicator to primary table
-                let joinIndicator = primaryTable.querySelector('.join-indicator');
-                if (!joinIndicator) {
-                    joinIndicator = document.createElement('div');
-                    joinIndicator.className = 'join-indicator';
-                    primaryTable.appendChild(joinIndicator);
-                }
-                joinIndicator.textContent = selectedTables.length;
-                
-                // Store joined tables information
-                joinedTables[primaryTableId] = selectedTables.slice(1);
-                
-                // Update the primary table's seat count
-                let totalSeats = 0;
-                selectedTables.forEach(tableId => {
-                    const table = document.getElementById(`table-${tableId}`);
-                    totalSeats += parseInt(table.dataset.seats) || 4;
-                    
-                    // If not the primary table, hide it
-                    if (tableId !== primaryTableId) {
-                        table.style.visibility = 'hidden';
-                        table.classList.add('part-of-joined');
-                        table.dataset.joinedWith = primaryTableId;
-                    }
-                });
-                
-                // Update primary table capacity
-                primaryTable.dataset.seats = totalSeats;
-                const capacityEl = primaryTable.querySelector('.capacity');
-                capacityEl.textContent = `Seats: ${totalSeats}`;
-                
-                // Update seats indicator
-                updateTableSeatsIndicator(primaryTable, totalSeats);
-                
-                // Update table data
-                tableData[primaryTableId] = {
-                    ...tableData[primaryTableId],
-                    seats: totalSeats,
-                    joined: true,
-                    joinedWith: joinedTables[primaryTableId]
-                };
-                
-                // Clear selection
-                selectedTables.forEach(tableId => {
-                    const table = document.getElementById(`table-${tableId}`);
-                    table.classList.remove('selected');
-                });
-                selectedTables = [];
-                joinTablesBtn.disabled = true;
-            }
-            
-            function updateJoinedTablesList(tableId) {
-                joinedTablesList.innerHTML = '';
-                
-                if (joinedTables[tableId] && joinedTables[tableId].length > 0) {
-                    joinedTables[tableId].forEach(joinedId => {
-                        const listItem = document.createElement('div');
-                        listItem.className = 'joined-table-item';
-                        listItem.innerHTML = `
-                            <span>Table #${joinedId}</span>
-                            <span class="remove-joined" data-table-id="${joinedId}">×</span>
-                        `;
-                        joinedTablesList.appendChild(listItem);
-                    });
-                    
-                    // Add event listeners to remove buttons
-                    joinedTablesList.querySelectorAll('.remove-joined').forEach(btn => {
-                        btn.addEventListener('click', function() {
-                            const tableToRemove = this.dataset.tableId;
-                            unjoinTable(tableId, tableToRemove);
-                        });
-                    });
-                } else {
-                    joinedTablesList.innerHTML = '<p>No tables joined</p>';
-                }
-            }
-            
-            function unjoinTable(primaryTableId, tableToRemoveId) {
-                // Remove table from joined list
-                joinedTables[primaryTableId] = joinedTables[primaryTableId].filter(id => id !== tableToRemoveId);
-                
-                // Update join indicator
-                const primaryTable = document.getElementById(`table-${primaryTableId}`);
-                const joinIndicator = primaryTable.querySelector('.join-indicator');
-                
-                if (joinedTables[primaryTableId].length === 0) {
-                    // No more joined tables, remove joined status
-                    primaryTable.classList.remove('joined');
-                    if (joinIndicator) primaryTable.removeChild(joinIndicator);
-                    delete joinedTables[primaryTableId];
-                } else {
-                    // Update join indicator count
-                    joinIndicator.textContent = joinedTables[primaryTableId].length + 1;
-                }
-                
-                // Make the removed table visible again
-                const tableToRemove = document.getElementById(`table-${tableToRemoveId}`);
-                tableToRemove.style.visibility = 'visible';
-                tableToRemove.classList.remove('part-of-joined');
-                delete tableToRemove.dataset.joinedWith;
-                
-                // Recalculate seats for primary table
-                let remainingSeats = parseInt(primaryTable.dataset.originalSeats || 4);
-                if (joinedTables[primaryTableId]) {
-                    joinedTables[primaryTableId].forEach(id => {
-                        const table = document.getElementById(`table-${id}`);
-                        remainingSeats += parseInt(table.dataset.seats || 4);
-                    });
-                }
-                
-                // Update primary table capacity
-                primaryTable.dataset.seats = remainingSeats;
-                const capacityEl = primaryTable.querySelector('.capacity');
-                capacityEl.textContent = `Seats: ${remainingSeats}`;
-                
-                // Update seats indicator
-                updateTableSeatsIndicator(primaryTable, remainingSeats);
-                
-                // Update table data
-                tableData[primaryTableId] = {
-                    ...tableData[primaryTableId],
-                    seats: remainingSeats,
-                    joined: joinedTables[primaryTableId] ? true : false,
-                    joinedWith: joinedTables[primaryTableId] || []
-                };
-                
-                // Update the joined tables list in the modal
-                updateJoinedTablesList(primaryTableId);
-            }
-            
-            function saveLayout() {
-                // Prepare layout data
-                const layoutData = {
-                    tables: Object.keys(tableData).map(tableId => ({
-                        id: tableId,
-                        ...tableData[tableId],
-                        position: getTablePosition(tableId)
-                    })),
-                    joinedTables: joinedTables
-                };
-                
-                // Send to server
-                fetch('/api/save_layout', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(layoutData),
+        function sendOrderToServer(tableID, items) {
+            fetch('/api/write_order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    table_id: tableID,
+                    items: items
                 })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Layout saved:', data);
-                    rebindTableEvents();
-                    // Exit edit mode
-                    exitEditMode();
-                })
-                .catch((error) => {
-                    console.error('Error saving layout:', error);
-                    alert('Error saving layout. Please try again.');
-                });
-            }
-            
-            function getTablePosition(tableId) {
-                const table = document.getElementById(`table-${tableId}`);
-                const rect = table.getBoundingClientRect();
-                const gridRect = seatingGrid.getBoundingClientRect();
-                
-                return {
-                    left: rect.left - gridRect.left,
-                    top: rect.top - gridRect.top,
-                    width: rect.width,
-                    height: rect.height
-                };
-            }
-            
-            function cancelEdit() {
-                // Restore original layout
-                if (originalLayout) {
-                    seatingGrid.innerHTML = originalLayout;
-                    
-                    rebindTableEvents();
-                }
-                
-                // Reset joined tables
-                joinedTables = {};
-                
-                // Exit edit mode
-                exitEditMode();
-            }
-            
-            function updateTableSizePreview(size) {
-                // This function would update a preview of the table size
-                // For simplicity, we're just logging it
-                console.log(`Table size changed to: ${size}`);
-            }
-            
-            function updateSeatsIndicator(count) {
-                // This function would update a preview of the seats
-                // For simplicity, we're just logging it
-                console.log(`Seat count changed to: ${count}`);
-            }
-            
-            function updateTableSeatsIndicator(tableElement, seatCount) {
-                const seatsIndicator = tableElement.querySelector('.seats-indicator');
-                seatsIndicator.innerHTML = '';
-                
-                // Create seat indicators (max visual representation is 8)
-                const visualSeats = Math.min(seatCount, 8);
-                for (let i = 0; i < visualSeats; i++) {
-                    const seat = document.createElement('div');
-                    seat.className = 'seat';
-                    seatsIndicator.appendChild(seat);
-                }
-                
-                // If more than 8 seats, add a +X indicator
-                if (seatCount > 8) {
-                    const extraSeats = document.createElement('span');
-                    extraSeats.textContent = `+${seatCount - 8}`;
-                    extraSeats.style.fontSize = '0.7rem';
-                    extraSeats.style.marginLeft = '3px';
-                    seatsIndicator.appendChild(extraSeats);
-                }
-            }
-            
-            function enableDraggableTables() {
-                document.querySelectorAll('.cell').forEach(table => {
-                    makeDraggable(table);
-                });
-            }
-            
-            function disableDraggableTables() {
-                document.querySelectorAll('.cell').forEach(table => {
-                    table.onmousedown = null;
-                });
-            }
-            
-            function makeDraggable(element) {
-                let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-                const handle = element.querySelector('.drag-handle');
-                
-                if (handle) {
-                    // If there's a handle, make only the handle trigger dragging
-                    handle.onmousedown = dragMouseDown;
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log("Order saved!");
                 } else {
-                    // Otherwise, make the whole element draggable
-                    element.onmousedown = dragMouseDown;
+                    console.error("Error saving order:", data.message);
                 }
-                
-                function dragMouseDown(e) {
-                    e = e || window.event;
-                    e.preventDefault();
-                    // Get the mouse cursor position at startup
-                    pos3 = e.clientX;
-                    pos4 = e.clientY;
-                    document.onmouseup = closeDragElement;
-                    // Call a function whenever the cursor moves
-                    document.onmousemove = elementDrag;
-                    
-                    // Add a class to indicate dragging
-                    element.classList.add('dragging');
-                }
-                
-                function elementDrag(e) {
-                    e = e || window.event;
-                    e.preventDefault();
-                    // Calculate the new cursor position
-                    pos1 = pos3 - e.clientX;
-                    pos2 = pos4 - e.clientY;
-                    pos3 = e.clientX;
-                    pos4 = e.clientY;
-                    
-                    // Check if the new position is within the grid boundaries
-                    const grid = seatingGrid.getBoundingClientRect();
-                    const elem = element.getBoundingClientRect();
-                    
-                    let newTop = element.offsetTop - pos2;
-                    let newLeft = element.offsetLeft - pos1;
-                    
-                    // Ensure the element stays within the grid
-                    if (newTop < 0) newTop = 0;
-                    if (newLeft < 0) newLeft = 0;
-                    if (newTop + elem.height > grid.height) newTop = grid.height - elem.height;
-                    if (newLeft + elem.width > grid.width) newLeft = grid.width - elem.width;
-                    
-                    // Set the element's new position
-                    element.style.top = newTop + "px";
-                    element.style.left = newLeft + "px";
-                    element.style.position = "absolute";
-                }
-                
-                function closeDragElement() {
-                    // Stop moving when mouse button is released
-                    document.onmouseup = null;
-                    document.onmousemove = null;
-                    element.classList.remove('dragging');
-                }
-            }
-            
-            // Initialize all tables
-            document.addEventListener('DOMContentLoaded', function() {
-                const tables = document.querySelectorAll('.cell');
-                tables.forEach(table => {
-                    const tableId = table.dataset.tableId;
-                    tableData[tableId] = {
-                        status: 'available',
-                        waiter: '',
-                        waiterName: '',
-                        waiterId: '',
-                        seats: parseInt(table.dataset.seats) || 4,
-                        size: table.dataset.size || 'small',
-                        joined: false
-                    };
-                    
-                    // Store original seat count for unjoin operations
-                    table.dataset.originalSeats = table.dataset.seats || 4;
-                });
+            })
+            .catch(err => {
+                console.error("Request failed", err);
             });
-
-            //Order item selection screen stuff
-            document.addEventListener('DOMContentLoaded', function () {
+        }
+        
+        // Add Items Screen functionality
+        // Add Items Screen functionality
+        document.addEventListener('DOMContentLoaded', function () {
             const addItemsBtn = document.getElementById('addItemsBtn');
             const addItemsModal = document.getElementById('addItemsScreen');
             const menuGrid = document.getElementById('menuItemsGrid');
-
-
-            const menuItems = [
-                { id: 1, name: "Burger", price: 8.99 },
-                { id: 2, name: "Pasta", price: 12.5 },
-                { id: 3, name: "Salad", price: 6.75 },
-                { id: 4, name: "Steak", price: 19.99 },
-                { id: 5, name: "Fries", price: 4.25 },
-                { id: 6, name: "Soup", price: 5.99 },
-            ];
 
             addItemsBtn.addEventListener('click', () => {
                 openAddItemsScreen();
@@ -1124,83 +593,61 @@
 
             function openAddItemsScreen() {
                 menuGrid.innerHTML = '';
+                
+                // Show loading indicator
+                menuGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">Loading menu items...</p>';
+                
+                // Fetch menu data from API endpoint
+                fetch('/api/menu')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.success) {
+                            throw new Error(data.message || 'Failed to load menu');
+                        }
+                        
+                        console.log('Menu data loaded successfully:', data.menu.length, 'items');
+                        
+                        // Group items by category
+                        const categories = groupByCategory(data.menu);
+                        
+                        // Clear loading indicator
+                        menuGrid.innerHTML = '';
+                        
+                        // Render menu categories and items
+                        renderMenuItems(categories);
+                    })
+                    .catch(error => {
+                        console.error('Error loading menu:', error);
+                        menuGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: red;">Error loading menu: ' + error.message + '</p>';
+                    });
+            
+                addItemsModal.style.display = 'block';
+            }
 
-                const categories = [
-                    {
-                        name: "Appetizers",
-                        color: "red",
-                        items: [
-                            { name: "Chicken Nachos", price: 8.5 },
-                            { name: "Pork Nachos", price: 8.5 },
-                            { name: "Pork or Chicken Sliders - 3", price: 5.0 },
-                            { name: "Catfish Bites", price: 6.5 },
-                            { name: "Fried Veggies", price: 6.5 },
-                        ]
-                    },
-                    {
-                        name: "Salads",
-                        color: "green",
-                        items: [
-                            { name: "House Salad", price: 7.5 },
-                            { name: "Wedge Salad", price: 7.5 },
-                            { name: "Caesar Salad", price: 7.5 },
-                            { name: "Sweet Potato Chicken Salad", price: 11.5 },
-                        ]
-                    },
-                    {
-                        name: "Entrees",
-                        color: "blue",
-                        items: [
-                            { name: "Shrimp & Grits", price: 13.5 },
-                            { name: "Sweet Tea Fried Chicken", price: 11.5 },
-                            { name: "Caribbean Chicken", price: 11.5 },
-                            { name: "Grilled Pork Chops", price: 11.0 },
-                            { name: "New York Strip Steak", price: 17.0 },
-                            { name: "Seared Tuna", price: 15.0 },
-                            { name: "Captain Crunch Chicken Tenders", price: 11.5 },
-                            { name: "Shock Top Grouper Fingers", price: 11.5 },
-                            { name: "Mac & Cheese Bar", price: 8.5 },
-                        ]
-                    },
-                    {
-                        name: "Sides",
-                        color: "brown",
-                        items: [
-                            "Curly Fries", "Wing Chips", "Sweet Potato Fries", "Creamy Cabbage Slaw", "Adluh Cheese Grits",
-                            "Mashed Potatoes", "Mac & Cheese", "Seasonal Vegetables", "Baked Beans"
-                        ].map(name => ({ name, price: 2.5 }))
-                    },
-                    {
-                        name: "Sandwiches",
-                        color: "sandybrown",
-                        items: [
-                            { name: "Grilled Cheese", price: 5.5 },
-                            { name: "Chicken BLT&A", price: 10.0 },
-                            { name: "Philly", price: 13.5 },
-                            { name: "Club", price: 10.0 },
-                            { name: "Meatball Sub", price: 10.0 },
-                        ]
-                    },
-                    {
-                        name: "Burgers",
-                        color: "teal",
-                        items: [
-                            { name: "Bacon Cheeseburger", price: 11.0 },
-                            { name: "Carolina Burger", price: 11.0 },
-                            { name: "Portobello Burger (V)", price: 8.5 },
-                            { name: "Vegan Boca Burger (V)", price: 10.5 },
-                        ]
-                    },
-                    {
-                        name: "Beverages",
-                        color: "hotpink",
-                        items: [
-                            "Sweet / Unsweetened Tea", "Coke / Diet Coke", "Sprite",
-                            "Bottled Water", "Lemonade", "Orange Juice"
-                        ].map(name => ({ name, price: 2.0 }))
+            // Function to group items by category
+            function groupByCategory(items) {
+                const categories = {};
+                
+                items.forEach(item => {
+                    if (!categories[item.category]) {
+                        categories[item.category] = {
+                            name: item.category,
+                            color: item.category_color,
+                            items: []
+                        };
                     }
-                ];
+                    
+                    categories[item.category].items.push({
+                        name: item.item_name,
+                        price: item.price
+                    });
+                });
+                
+                return Object.values(categories);
+            }
 
+            // Function to render menu items
+            function renderMenuItems(categories) {
                 categories.forEach(category => {
                     const title = document.createElement('h4');
                     title.textContent = category.name;
@@ -1247,8 +694,6 @@
                         menuGrid.appendChild(card);
                     });
                 });
-
-                addItemsModal.style.display = 'block';
             }
 
             window.closeAddItemsScreen = function () {
@@ -1330,31 +775,7 @@
                 closeAddItemsScreen();
             };
         });
+    </script>
 
-        function sendOrderToServer(tableID, items) {
-            fetch('/api/write_order', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    table_id: tableID,
-                    items: items
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    console.log("Order saved!");
-                } else {
-                    console.error("Error saving order:", data.message);
-                }
-            })
-            .catch(err => {
-                console.error("Request failed", err);
-            });
-        }
-
-        </script>
     </body>
 </html>

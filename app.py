@@ -1,5 +1,4 @@
 import traceback
-from datetime import datetime
 
 from flask import (
     Flask,
@@ -7,12 +6,14 @@ from flask import (
     request,
     redirect,
     url_for,
-    get_flashed_messages,
     flash,
-    jsonify, session
+    jsonify,
+    session,
+    send_from_directory
 )
 
 import pandas as pd
+import numpy as np
 
 import csv
 import os
@@ -20,7 +21,7 @@ import os
 from src.utils.employee_factory import create_manager, create_cook, create_waiter
 from src.Restaurant import Restaurant
 
-USER_CSV_PATH = "data/users.csv"
+USER_CSV_PATH = "data/employee.csv"
 
 def check_role(username, password):
     user_df = pd.read_csv(USER_CSV_PATH, index_col=0)
@@ -79,13 +80,14 @@ def home():
 # --------Login Path----------- #
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
         
         if check_credential(username, password):
-
+            # Store username in session
+            session['username'] = username
+            
             role = check_role(username, password)
             
             if role.lower() == "manager":
@@ -99,10 +101,9 @@ def login():
         
         else:
             return render_template("login.html", 
-                                   error="That Plate and Byte account doesn't exist. Enter a different account.")
+                                error="That Plate and Byte account doesn't exist. Enter a different account.")
     
     return render_template("login.html")
-    
     
 # --------- Signup Page --------- #
 @app.route("/signup", methods=["GET", "POST"])
@@ -146,8 +147,9 @@ def add_employee_web():
                     if row['username'] == username:
                         return "Username already exists.", 400
 
-        emp_id = len(restaurant.employees) + 1
-
+        emp_id = restaurant.curr_emp_id + 1
+        restaurant.curr_emp_id += 1
+        
         if role == "Manager":
             new_employee = create_manager(name, username, password, emp_id)
         elif role == "Cook":
@@ -251,52 +253,34 @@ def edit_employee(employee_id):
 def delete_employee(employee_id):
     
     
+    tables_file_path = os.path.join('data', 'tables.csv')
+    waiters_file_path = os.path.join('data', 'waiters.csv')
     employee_file_path = os.path.join('data', 'employee.csv')
 
-    employees = []
-
-    if os.path.isfile(employee_file_path):
-        with open(employee_file_path, mode='r', newline='') as emp_csv:
-            employee_reader = csv.DictReader(emp_csv)
-            employees = list(employee_reader)
-
-    employees = [emp for emp in employees if int(emp['id']) != employee_id]
-    current_employee_role = [emp["role"] for emp in employees if int(emp['id']) == employee_id]
+    employee_df = pd.read_csv(employee_file_path, index_col=0)
     
-    # Need to get the employee role to delete from managers
-    if current_employee_role.lower() == "waiter":
-        waiter_file_path = os.path.join('data', 'waiter.csv')
+    current_employees = employee_df[employee_df.index != employee_id]
+    current_employees.to_csv(employee_file_path)
     
-        employees = []
-
-        if os.path.isfile(waiter_file_path):
-            with open(waiter_file_path, mode='r', newline='') as wait_csv:
-                employee_reader = csv.DictReader(wait_csv)
-                employees = list(employee_reader)
-            
-            employees = [emp for emp in employees if int(emp['id']) != employee_id]
-            
-            with open(employee_file_path, mode='w', newline='') as wait_csv:
-                fieldnames = ['id', 'username', 'name', 'password']
-                writer = csv.DictWriter(wait_csv, fieldnames=fieldnames)
-                writer.writeheader()
-                for emp in employees:
-                    writer.writerow(emp)
-            
+    removed_employee_role = employee_df[employee_df.index == employee_id].role.item()
     
-    elif current_employee_role.lower() == "manager":
+    if removed_employee_role.lower() == "waiter":
+        waiter_df = pd.read_csv(waiters_file_path, index_col=0)
+        tables_df = pd.read_csv(tables_file_path, index_col=0)
+        
+        current_waiters = waiter_df[waiter_df.index != employee_id]
+        current_waiters.to_csv(waiters_file_path)
+        
+        tables_df.loc[tables_df.waiter_id == employee_id, "waiter_id"] = np.nan
+        tables_df.to_csv(tables_file_path)
+        
+    elif removed_employee_role.lower() == "manager":
         pass
+            
     
-    elif current_employee_role.lower() == "cook":
-        pass
-    
-    # Save updated list
-    with open(employee_file_path, mode='w', newline='') as emp_csv:
-        fieldnames = ['id', 'username', 'name', 'password', 'role']
-        writer = csv.DictWriter(emp_csv, fieldnames=fieldnames)
-        writer.writeheader()
-        for emp in employees:
-            writer.writerow(emp)
+    # elif current_employee_role.lower() == "cook":
+    #     pass
+        
 
     flash('Employee deleted successfully!', 'success')
     return redirect('/view_employees')
@@ -507,17 +491,60 @@ def get_waiters():
     
     return jsonify(waiters)
 
+@app.route('/api/current_waiter', methods=['GET'])
+def get_current_waiter():
+    # Get username from session (you'll need to set this during login)
+    username = session.get('username')
+    
+    if not username:
+        return jsonify({'success': False, 'message': 'Not logged in'})
+    
+    # Look up the waiter in the waiters.csv file
+    try:
+        with open('data/waiters.csv', 'r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                if row.get('username') == username:
+                    return jsonify({
+                        'success': True,
+                        'waiter_id': row.get('id', ''),
+                        'waiter_name': row.get('name', '')
+                    })
+    except Exception as e:
+        print(f"Error reading waiters.csv: {e}")
+    
+    return jsonify({'success': False, 'message': 'Waiter not found'})
+
 @app.route('/api/tables', methods=['GET'])
 def get_tables():
     tables = []
+    waiters = {}
+    
+    # First load all waiters into a dictionary for quick lookup
+    try:
+        with open('data/waiters.csv', 'r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                waiters[row.get('id', '')] = {
+                    'name': row.get('name', ''),
+                    'username': row.get('username', '')
+                }
+    except Exception as e:
+        print(f"Error reading waiters.csv: {e}")
+    
+    # Then load tables with waiter names
     try:
         with open('data/tables.csv', 'r') as file:
             reader = csv.DictReader(file)
             for row in reader:
+                waiter_id = row.get('waiter_id', '')
+                waiter_name = waiters.get(waiter_id, {}).get('name', '') if waiter_id else ''
+                
                 tables.append({
                     'table_id': row.get('table_id', ''),
                     'status': row.get('status', 'Available'),
-                    'waiter_id': row.get('waiter_id', '')
+                    'waiter_id': waiter_id,
+                    'waiter_name': waiter_name
                 })
     except Exception as e:
         print(f"Error reading tables.csv: {e}")
@@ -542,27 +569,54 @@ def write_order():
         traceback.print_exc()
         return jsonify({'success': False, 'message': str(e)}), 500
 
-@app.route("/manager")
-def manager():
-    return render_template("manager_index.html")
+@app.route('/data/<path:filename>')
+def serve_data(filename):
+    return send_from_directory('data', filename)
 
-@app.route("/cook")
-def cook():
-    return render_template("cook_index.html")
+@app.route('/api/menu')
+def get_menu():
+    try:
+        menu_path = 'data/menu.csv'
+        if not os.path.exists(menu_path):
+            return jsonify({'success': False, 'message': 'Menu file not found'}), 404
+            
+        menu_items = []
+        with open(menu_path, 'r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                # Convert price to float
+                if 'price' in row:
+                    row['price'] = float(row['price'])
+                menu_items.append(row)
+                
+        return jsonify({'success': True, 'menu': menu_items})
+    except Exception as e:
+        print(f"Error loading menu: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
 
-@app.route("/waiter")
-def waiter():
-    return render_template("waiter_index.html")
 
+@app.route('/api/save_menu', methods=['POST'])
+def save_menu():
+    try:
+        data = request.json
+        menu_items = data.get('menu_items')
+        
+        if not menu_items:
+            return jsonify({'success': False, 'message': 'No menu items provided'})
+        
+        # Get the field names from the first item
+        fieldnames = list(menu_items[0].keys())
+        
+        # Write to the menu.csv file
+        with open('data/menu.csv', 'w', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(menu_items)
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
 
-@app.route("/index")
-def index():
-    return render_template("index.html")
-
-
-
-
-###Cook Queu For adding and removing orders.
 @app.route('/cook_order', methods=['POST'])
 def cook_order_route():
     table_number = int(request.form['table_number'])
@@ -581,33 +635,27 @@ def cook_queue():
             orders = list(reader)
     return render_template('cookqueue.html', orders=orders)
 
-@app.route('/clock', methods=['GET', 'POST'])
-def clock_in_out():
-    # 🔐 Ensure the user is logged in
-    print(session)
-    if 'employee_id' not in session:
-        flash("You must be logged in to access this page.", "error")
-        return redirect('/login')
 
-    employee_id = session['employee_id']
+@app.route("/manager")
+def manager():
+    return render_template("manager_index.html")
 
-    if request.method == 'POST':
-        action = request.form['action']  # 'in' or 'out'
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+@app.route("/cook")
+def cook():
+    return render_template("cook_index.html")
 
-        file_path = os.path.join('data', 'employee_time.csv')
-        file_exists = os.path.isfile(file_path)
+@app.route("/waiter")
+def waiter():
+    return render_template("waiter_index.html")
 
-        with open(file_path, mode='a', newline='') as file:
-            writer = csv.writer(file)
-            if not file_exists:
-                writer.writerow(['employee_id', 'action', 'timestamp'])
-            writer.writerow([employee_id, action, timestamp])
+@app.route('/menu/edit')
+def menu_edit():
+    return render_template('menu_edit.html')
 
-        flash(f"You clocked {'in' if action == 'in' else 'out'} at {timestamp}")
-        return redirect('/clock')
+@app.route("/index")
+def index():
+    return render_template("index.html")
 
-    return render_template('clock.html', employee_id=employee_id)
 
 if __name__ == "__main__":
     app.run(debug=True, port=8000)
