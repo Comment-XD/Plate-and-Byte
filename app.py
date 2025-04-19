@@ -1,4 +1,5 @@
 import traceback
+from datetime import datetime
 
 from flask import (
     Flask,
@@ -6,9 +7,9 @@ from flask import (
     request,
     redirect,
     url_for,
-    get_flashed_messages, 
+    get_flashed_messages,
     flash,
-    jsonify
+    jsonify, session
 )
 
 import pandas as pd
@@ -579,6 +580,34 @@ def cook_queue():
             reader = csv.DictReader(file)
             orders = list(reader)
     return render_template('cookqueue.html', orders=orders)
+
+@app.route('/clock', methods=['GET', 'POST'])
+def clock_in_out():
+    # 🔐 Ensure the user is logged in
+    print(session)
+    if 'employee_id' not in session:
+        flash("You must be logged in to access this page.", "error")
+        return redirect('/login')
+
+    employee_id = session['employee_id']
+
+    if request.method == 'POST':
+        action = request.form['action']  # 'in' or 'out'
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        file_path = os.path.join('data', 'employee_time.csv')
+        file_exists = os.path.isfile(file_path)
+
+        with open(file_path, mode='a', newline='') as file:
+            writer = csv.writer(file)
+            if not file_exists:
+                writer.writerow(['employee_id', 'action', 'timestamp'])
+            writer.writerow([employee_id, action, timestamp])
+
+        flash(f"You clocked {'in' if action == 'in' else 'out'} at {timestamp}")
+        return redirect('/clock')
+
+    return render_template('clock.html', employee_id=employee_id)
 
 if __name__ == "__main__":
     app.run(debug=True, port=8000)

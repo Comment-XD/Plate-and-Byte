@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Clock In / Clock Out</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/clock.css') }}">
+</head>
+<body>
+
+    <!-- Orange Navbar -->
+    <div class="navbar">
+        <a href="/">Home</a>
+        <a href="/view_employees">Employees</a>
+        <a href="/add_employee_web">Add Employee</a>
+        <a href="/cookqueue">Cook Queue</a>
+        <a href="/clock">Clock In/Out</a>
+    </div>
+
+    <div class="form-container">
+        <h2>Employee Clock In / Clock Out</h2>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="flash-message">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="/clock">
+            <p><strong>Employee ID:</strong> {{ employee_id }}</p>
+            <input type="hidden" name="employee_id" value="{{ employee_id }}">
+
+            <div class="button-group">
+                <button type="submit" name="action" value="in">Clock In</button>
+                <button type="submit" name="action" value="out">Clock Out</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Flash Auto-Fade Script -->
+    <script>
+        setTimeout(() => {
+            document.querySelectorAll('.flash-message').forEach(el => el.style.opacity = '0');
+        }, 3000);
+    </script>
+
+</body>
+</html>
