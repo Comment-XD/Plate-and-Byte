@@ -9,10 +9,12 @@ from flask import (
     flash,
     jsonify,
     session,
-    send_from_directory
+    send_from_directory,
+    send_file
 )
 
 import pandas as pd
+import openpyxl
 import numpy as np
 
 import csv
@@ -635,7 +637,75 @@ def cook_queue():
             orders = list(reader)
     return render_template('cookqueue.html', orders=orders)
 
+from datetime import datetime
+import os
+import csv
+from flask import request, render_template, redirect, flash, session
 
+
+###Clock in clock out function.
+@app.route('/clock', methods=['GET', 'POST'])
+def clock_in_out():
+    if 'username' not in session:
+        flash("You must be logged in to access this page.", "error")
+        return redirect('/login')
+
+    username = session['username']
+    employee_id = None
+
+    # ✅ Use employee.csv to look up ID
+    employee_path = os.path.join(os.path.dirname(__file__), 'data', 'employee.csv')
+    try:
+        with open(employee_path, mode='r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                if row['username'] == username:
+                    employee_id = int(row['id'])
+                    break
+    except FileNotFoundError:
+        flash("Error: employee.csv not found.", "error")
+        return redirect('/')
+
+    if not employee_id:
+        flash("User not found in employee.csv.", "error")
+        return redirect('/')
+
+    if request.method == 'POST':
+        action = request.form['action']  # 'in' or 'out'
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        # ✅ Append to employee_time.csv at the end
+        time_log_path = os.path.join(os.path.dirname(__file__), 'data', 'employee_time.csv')
+        file_exists = os.path.isfile(time_log_path)
+
+        with open(time_log_path, mode='a', newline='') as file:
+            writer = csv.writer(file)
+            if not file_exists:
+                writer.writerow(['employee_id', 'username', 'action', 'timestamp'])
+            writer.writerow([employee_id, username, action, timestamp])
+
+        flash(f"You clocked {'in' if action == 'in' else 'out'} at {timestamp}", "success")
+        return redirect('/clock')
+
+    return render_template('clock.html', employee_id=employee_id)
+
+#Workload will allows managers to see the time clock and edit in an excel file
+@app.route('/export_workload')
+def export_workload():
+    if 'username' not in session or session.get('position') != 'Manager':
+        flash("Only managers can export workload data.", "error")
+        return redirect('/')
+
+    # Paths
+    csv_path = os.path.join(os.path.dirname(__file__), 'data', 'employee_time.csv')
+    excel_path = os.path.join(os.path.dirname(__file__), 'data', 'workload_export.xlsx')
+
+    # Convert CSV to Excel
+    df = pd.read_csv(csv_path)
+    df.to_excel(excel_path, index=False)
+
+    # Serve file
+    return send_file(excel_path, as_attachment=True)
 @app.route("/manager")
 def manager():
     return render_template("manager_index.html")
