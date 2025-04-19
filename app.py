@@ -271,7 +271,7 @@ def delete_employee(employee_id):
         current_waiters = waiter_df[waiter_df.index != employee_id]
         current_waiters.to_csv(waiters_file_path)
         
-        tables_df.loc[tables_df.waiter_id == 2, "waiter_id"] = np.nan
+        tables_df.loc[tables_df.waiter_id == employee_id, "waiter_id"] = np.nan
         tables_df.to_csv(tables_file_path)
         
     elif removed_employee_role.lower() == "manager":
