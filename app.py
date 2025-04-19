@@ -852,7 +852,7 @@ def manager():
 
 @app.route("/cook")
 def cook():
-    return render_template("cookqueue.html")
+    return redirect("/cookqueue")
 
 @app.route("/waiter")
 def waiter():

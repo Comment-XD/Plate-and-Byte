@@ -9,3 +9,5 @@ table_number,food_item,price,total_quantity,total_price
 3,Grilled Cheese,6.25,1,6.25
 4,Tacos,4.00,4,16.00
 5,Coffee,3.00,3,9.00
+1,Pizza,10.00,2,20.00
+2,Burger,8.50,1,8.50
