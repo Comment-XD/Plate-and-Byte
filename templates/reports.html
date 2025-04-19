@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Hours - Plate and Byte</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Employee Hours</h1>
+        
+        {% if get_flashed_messages() %}
+        <div class="flash-messages">
+            {% for category, message in get_flashed_messages(with_categories=true) %}
+            <div class="flash-message {{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <div class="filter-controls">
+            <label for="employee-filter">Filter by Employee:</label>
+            <select id="employee-filter">
+                <option value="all">All Employees</option>
+                {% for entry in total_hours %}
+                <option value="{{ entry.username }}">{{ entry.name }} ({{ entry.username }})</option>
+                {% endfor %}
+            </select>
+            
+            <label for="date-filter">Filter by Date:</label>
+            <input type="date" id="date-filter">
+            
+            <button onclick="applyFilters()">Apply Filters</button>
+            <button onclick="resetFilters()">Reset</button>
+        </div>
+        
+        <h2>Summary of Total Hours</h2>
+        <table class="summary-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Username</th>
+                    <th>Total Hours</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in total_hours %}
+                <tr>
+                    <td>{{ entry.id }}</td>
+                    <td>{{ entry.name }}</td>
+                    <td>{{ entry.username }}</td>
+                    <td>{{ entry.total_hours }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <h2>Detailed Hours</h2>
+        {% if hours_data %}
+        <table id="detailed-hours-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Date</th>
+                    <th>Clock In</th>
+                    <th>Clock Out</th>
+                    <th>Hours Worked</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in hours_data %}
+                <tr class="hour-entry" data-username="{{ entry.username }}" data-date="{{ entry.date }}">
+                    <td>{{ entry.id }}</td>
+                    <td>{{ entry.username }}</td>
+                    <td>{{ entry.date }}</td>
+                    <td>{{ entry.clock_in }}</td>
+                    <td>{{ entry.clock_out }}</td>
+                    <td>{{ entry.hours_worked }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="no-data">No employee hours data available.</div>
+        {% endif %}
+        
+        <a href="{{ url_for('manager') }}" class="back-link">Back to Dashboard</a>
+    </div>
+    
+    <script>
+        function applyFilters() {
+            const employeeFilter = document.getElementById('employee-filter').value;
+            const dateFilter = document.getElementById('date-filter').value;
+            
+            const rows = document.querySelectorAll('#detailed-hours-table tbody tr');
+            
+            rows.forEach(row => {
+                const username = row.getAttribute('data-username');
+                const date = row.getAttribute('data-date');
+                
+                let showRow = true;
+                
+                if (employeeFilter !== 'all' && username !== employeeFilter) {
+                    showRow = false;
+                }
+                
+                if (dateFilter && date !== dateFilter) {
+                    showRow = false;
+                }
+                
+                row.style.display = showRow ? '' : 'none';
+            });
+        }
+        
+        function resetFilters() {
+            document.getElementById('employee-filter').value = 'all';
+            document.getElementById('date-filter').value = '';
+            
+            const rows = document.querySelectorAll('#detailed-hours-table tbody tr');
+            rows.forEach(row => {
+                row.style.display = '';
+            });
+        }
+    </script>
+</body>
+</html>

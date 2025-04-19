@@ -1,0 +1,104 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f5f5f5;
+}
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+h1, h2 {
+    color: #333;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+th {
+    background-color: #f8f8f8;
+    font-weight: bold;
+}
+tr:hover {
+    background-color: #f1f1f1;
+}
+.summary-table {
+    margin-top: 30px;
+    background-color: #f9f9f9;
+}
+.summary-table th {
+    background-color: #eaeaea;
+}
+.back-link {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 10px 15px;
+    background-color: #4CAF50;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+}
+.back-link:hover {
+    background-color: #45a049;
+}
+.no-data {
+    padding: 20px;
+    text-align: center;
+    color: #777;
+}
+.flash-messages {
+    margin-bottom: 20px;
+}
+.flash-message {
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+}
+.flash-message.error {
+    background-color: #ffebee;
+    color: #c62828;
+}
+.flash-message.success {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.filter-controls {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f8f8f8;
+    border-radius: 5px;
+}
+
+.filter-controls label {
+    margin-right: 15px;
+}
+
+.filter-controls select, .filter-controls input {
+    padding: 5px;
+    border-radius: 3px;
+    border: 1px solid #ddd;
+}
+
+.filter-controls button {
+    padding: 5px 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.filter-controls button:hover {
+    background-color: #45a049;
+}

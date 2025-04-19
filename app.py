@@ -14,7 +14,6 @@ from flask import (
 )
 
 import pandas as pd
-import openpyxl
 import numpy as np
 
 import csv
@@ -89,6 +88,7 @@ def login():
         if check_credential(username, password):
             # Store username in session
             session['username'] = username
+            session['password'] = password
             
             role = check_role(username, password)
             
@@ -742,11 +742,8 @@ def workload():
 
     return render_template("workload.html", summary=summary, logs=detailed_logs)
 
-
-
 @app.route('/export_workload')
 def export_workload():
-
 
     # Paths
     csv_path = os.path.join(os.path.dirname(__file__), 'data', 'employee_time.csv')
@@ -758,6 +755,97 @@ def export_workload():
 
     # Serve file
     return send_file(excel_path, as_attachment=True)
+
+@app.route('/reports')
+def reports():
+    try:
+        # Check if employee_time.csv exists
+        time_file_path = os.path.join('data', 'employee_time.csv')
+        employee_file_path = os.path.join('data', 'employee.csv')
+        
+        if not os.path.isfile(time_file_path) or not os.path.isfile(employee_file_path):
+            flash('Required data files not found', 'error')
+            return render_template('reports.html', hours_data=[], total_hours=[])
+        
+        # Read employee data to get current active employees
+        employee_df = pd.read_csv(employee_file_path)
+        active_employee_ids = set(employee_df['id'].astype(str))
+        
+        # Read time tracking data
+        time_df = pd.read_csv(time_file_path)
+        
+        # Process the data to calculate hours
+        hours_data = []
+        
+        # Check CSV structure and process accordingly
+        if 'action' in time_df.columns and 'timestamp' in time_df.columns:
+            # Group by employee to track clock-in/clock-out pairs
+            employee_sessions = {}
+            
+            for _, row in time_df.iterrows():
+                # Only process records for active employees
+                if str(row['id']) in active_employee_ids:
+                    key = (row['id'], row['username'])
+                    timestamp = datetime.strptime(row['timestamp'], '%Y-%m-%d %H:%M:%S')
+                    
+                    if row['action'] == 'in':
+                        if key not in employee_sessions:
+                            employee_sessions[key] = []
+                        employee_sessions[key].append({'clock_in': timestamp, 'clock_out': None})
+                    elif row['action'] == 'out':
+                        if key in employee_sessions and employee_sessions[key] and employee_sessions[key][-1]['clock_out'] is None:
+                            employee_sessions[key][-1]['clock_out'] = timestamp
+            
+            # Calculate hours for each session
+            for key, sessions in employee_sessions.items():
+                for session in sessions:
+                    if session['clock_out']:  # Only process complete sessions
+                        hours_worked = (session['clock_out'] - session['clock_in']).total_seconds() / 3600
+                        date_str = session['clock_in'].strftime('%Y-%m-%d')
+                        
+                        hours_data.append({
+                            'id': key[0],
+                            'username': key[1],
+                            'date': date_str,
+                            'clock_in': session['clock_in'].strftime('%H:%M:%S'),
+                            'clock_out': session['clock_out'].strftime('%H:%M:%S'),
+                            'hours_worked': round(hours_worked, 2)
+                        })
+        else:
+            # Handle alternative CSV format if needed
+            flash('Unsupported time tracking format', 'error')
+            return render_template('reports.html', hours_data=[], total_hours=[])
+        
+        # Calculate total hours per employee
+        employee_totals = {}
+        for entry in hours_data:
+            key = (entry['id'], entry['username'])
+            if key not in employee_totals:
+                employee_totals[key] = 0
+            employee_totals[key] += entry['hours_worked']
+        
+        # Format the totals for the template
+        total_hours = [{'id': k[0], 'username': k[1], 'total_hours': round(v, 2)} 
+                      for k, v in employee_totals.items()]
+        
+        # Add employee names to the total_hours data
+        for entry in total_hours:
+            employee_row = employee_df[employee_df['id'] == int(entry['id'])]
+            if not employee_row.empty:
+                entry['name'] = employee_row.iloc[0]['name']
+            else:
+                entry['name'] = 'Unknown'
+        
+        return render_template('reports.html', hours_data=hours_data, total_hours=total_hours)
+    
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"Error in reports route: {error_details}")
+        flash(f'Error processing employee hours: {str(e)}', 'error')
+        return render_template('reports.html', hours_data=[], total_hours=[])
+
+
 @app.route("/manager")
 def manager():
     return render_template("manager_index.html")
