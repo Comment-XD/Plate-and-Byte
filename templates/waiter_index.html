@@ -310,7 +310,6 @@
             }
         }
         
-        
         function loadTableData() {
             fetch('/api/tables')
                 .then(response => response.json())
@@ -582,94 +581,73 @@
         }
         
         // Add Items Screen functionality
+        // Add Items Screen functionality
         document.addEventListener('DOMContentLoaded', function () {
             const addItemsBtn = document.getElementById('addItemsBtn');
             const addItemsModal = document.getElementById('addItemsScreen');
             const menuGrid = document.getElementById('menuItemsGrid');
-        
+
             addItemsBtn.addEventListener('click', () => {
                 openAddItemsScreen();
             });
-        
+
             function openAddItemsScreen() {
                 menuGrid.innerHTML = '';
-        
-                const categories = [
-                    {
-                        name: "Appetizers",
-                        color: "red",
-                        items: [
-                            { name: "Chicken Nachos", price: 8.5 },
-                            { name: "Pork Nachos", price: 8.5 },
-                            { name: "Pork or Chicken Sliders - 3", price: 5.0 },
-                            { name: "Catfish Bites", price: 6.5 },
-                            { name: "Fried Veggies", price: 6.5 },
-                        ]
-                    },
-                    {
-                        name: "Salads",
-                        color: "green",
-                        items: [
-                            { name: "House Salad", price: 7.5 },
-                            { name: "Wedge Salad", price: 7.5 },
-                            { name: "Caesar Salad", price: 7.5 },
-                            { name: "Sweet Potato Chicken Salad", price: 11.5 },
-                        ]
-                    },
-                    {
-                        name: "Entrees",
-                        color: "blue",
-                        items: [
-                            { name: "Shrimp & Grits", price: 13.5 },
-                            { name: "Sweet Tea Fried Chicken", price: 11.5 },
-                            { name: "Caribbean Chicken", price: 11.5 },
-                            { name: "Grilled Pork Chops", price: 11.0 },
-                            { name: "New York Strip Steak", price: 17.0 },
-                            { name: "Seared Tuna", price: 15.0 },
-                            { name: "Captain Crunch Chicken Tenders", price: 11.5 },
-                            { name: "Shock Top Grouper Fingers", price: 11.5 },
-                            { name: "Mac & Cheese Bar", price: 8.5 },
-                        ]
-                    },
-                    {
-                        name: "Sides",
-                        color: "brown",
-                        items: [
-                            "Curly Fries", "Wing Chips", "Sweet Potato Fries", "Creamy Cabbage Slaw", "Adluh Cheese Grits",
-                            "Mashed Potatoes", "Mac & Cheese", "Seasonal Vegetables", "Baked Beans"
-                        ].map(name => ({ name, price: 2.5 }))
-                    },
-                    {
-                        name: "Sandwiches",
-                        color: "sandybrown",
-                        items: [
-                            { name: "Grilled Cheese", price: 5.5 },
-                            { name: "Chicken BLT&A", price: 10.0 },
-                            { name: "Philly", price: 13.5 },
-                            { name: "Club", price: 10.0 },
-                            { name: "Meatball Sub", price: 10.0 },
-                        ]
-                    },
-                    {
-                        name: "Burgers",
-                        color: "teal",
-                        items: [
-                            { name: "Bacon Cheeseburger", price: 11.0 },
-                            { name: "Carolina Burger", price: 11.0 },
-                            { name: "Portobello Burger (V)", price: 8.5 },
-                            { name: "Vegan Boca Burger (V)", price: 10.5 },
-                        ]
-                    },
-                    {
-                        name: "Beverages",
-                        color: "hotpink",
-                        items: [
-                            "Sweet / Unsweetened Tea", "Coke / Diet Coke", "Sprite",
-                            "Bottled Water", "Lemonade", "Orange Juice"
-                        ].map(name => ({ name, price: 2.0 }))
+                
+                // Show loading indicator
+                menuGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">Loading menu items...</p>';
+                
+                // Fetch menu data from API endpoint
+                fetch('/api/menu')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.success) {
+                            throw new Error(data.message || 'Failed to load menu');
+                        }
+                        
+                        console.log('Menu data loaded successfully:', data.menu.length, 'items');
+                        
+                        // Group items by category
+                        const categories = groupByCategory(data.menu);
+                        
+                        // Clear loading indicator
+                        menuGrid.innerHTML = '';
+                        
+                        // Render menu categories and items
+                        renderMenuItems(categories);
+                    })
+                    .catch(error => {
+                        console.error('Error loading menu:', error);
+                        menuGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: red;">Error loading menu: ' + error.message + '</p>';
+                    });
+            
+                addItemsModal.style.display = 'block';
+            }
+
+            // Function to group items by category
+            function groupByCategory(items) {
+                const categories = {};
+                
+                items.forEach(item => {
+                    if (!categories[item.category]) {
+                        categories[item.category] = {
+                            name: item.category,
+                            color: item.category_color,
+                            items: []
+                        };
                     }
-                ];
-        
+                    
+                    categories[item.category].items.push({
+                        name: item.item_name,
+                        price: item.price
+                    });
+                });
+                
+                return Object.values(categories);
+            }
+
+            // Function to render menu items
+            function renderMenuItems(categories) {
                 categories.forEach(category => {
                     const title = document.createElement('h4');
                     title.textContent = category.name;
@@ -677,13 +655,13 @@
                     title.style.gridColumn = '1 / -1';
                     title.style.marginTop = '15px';
                     menuGrid.appendChild(title);
-        
+
                     category.items.forEach(item => {
                         const card = document.createElement('div');
                         card.className = 'menu-item-card';
                         card.dataset.name = item.name;
                         card.dataset.price = item.price;
-        
+
                         card.innerHTML = `
                             <div class="menu-item-title">${item.name}</div>
                             <div class="menu-item-price">$${item.price.toFixed(2)}</div>
@@ -693,48 +671,46 @@
                                 <button class="increase">+</button>
                             </div>
                         `;
-        
+
                         card.addEventListener('click', function () {
                             card.classList.toggle('selected');
                             const qtySelector = card.querySelector('.quantity-selector');
                             qtySelector.style.display = card.classList.contains('selected') ? 'flex' : 'none';
                         });
-        
+
                         card.querySelector('.increase').addEventListener('click', (e) => {
                             e.stopPropagation();
                             const qtyEl = card.querySelector('.qty');
                             qtyEl.textContent = parseInt(qtyEl.textContent) + 1;
                         });
-        
+
                         card.querySelector('.decrease').addEventListener('click', (e) => {
                             e.stopPropagation();
                             const qtyEl = card.querySelector('.qty');
                             const newQty = Math.max(1, parseInt(qtyEl.textContent) - 1);
                             qtyEl.textContent = newQty;
                         });
-        
+
                         menuGrid.appendChild(card);
                     });
                 });
-        
-                addItemsModal.style.display = 'block';
             }
-        
+
             window.closeAddItemsScreen = function () {
                 addItemsModal.style.display = 'none';
             };
-        
+
             window.finishAddingItems = function () {
                 const selectedCards = menuGrid.querySelectorAll('.menu-item-card.selected');
-        
+
                 selectedCards.forEach(card => {
                     const name = card.dataset.name;
                     const price = parseFloat(card.dataset.price);
                     const qty = parseInt(card.querySelector('.qty').textContent);
-        
+
                     const existing = [...orderedItemsList.querySelectorAll('.item')]
                         .find(item => item.dataset.name === name);
-        
+
                     if (existing) {
                         // If already exists, increase quantity
                         const currentQty = parseInt(existing.dataset.qty);
@@ -749,7 +725,7 @@
                         itemEntry.dataset.price = price;
                         itemEntry.dataset.qty = qty;
                         itemEntry.dataset.name = name;
-        
+
                         itemEntry.innerHTML = `
                             <span>
                                 ${name} ×
@@ -762,7 +738,7 @@
                                 <span class="remove-item" style="margin-left:10px; cursor:pointer;" title="Remove">🗑️</span>
                             </span>
                         `;
-        
+
                         // Event listeners for +/-
                         itemEntry.querySelector('.plus').addEventListener('click', () => {
                             const countEl = itemEntry.querySelector('.qty-count');
@@ -773,7 +749,7 @@
                             itemEntry.querySelector('.editable-price').textContent = (count * price).toFixed(2);
                             updateOrderSummary();
                         });
-        
+
                         itemEntry.querySelector('.minus').addEventListener('click', () => {
                             const countEl = itemEntry.querySelector('.qty-count');
                             let count = parseInt(countEl.textContent);
@@ -785,22 +761,20 @@
                                 updateOrderSummary();
                             }
                         });
-        
+
                         itemEntry.querySelector('.remove-item').addEventListener('click', () => {
                             itemEntry.remove();
                             updateOrderSummary();
                         });
-        
+
                         orderedItemsList.appendChild(itemEntry);
                     }
                 });
-        
+
                 updateOrderSummary();
                 closeAddItemsScreen();
             };
         });
-           
-        
     </script>
 
     </body>

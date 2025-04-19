@@ -6,10 +6,10 @@ from flask import (
     request,
     redirect,
     url_for,
-    get_flashed_messages, 
     flash,
     jsonify,
-    session
+    session,
+    send_from_directory
 )
 
 import pandas as pd
@@ -569,6 +569,56 @@ def write_order():
         traceback.print_exc()
         return jsonify({'success': False, 'message': str(e)}), 500
 
+@app.route('/data/<path:filename>')
+def serve_data(filename):
+    return send_from_directory('data', filename)
+
+@app.route('/api/menu')
+def get_menu():
+    try:
+        menu_path = 'data/menu.csv'
+        if not os.path.exists(menu_path):
+            return jsonify({'success': False, 'message': 'Menu file not found'}), 404
+            
+        menu_items = []
+        with open(menu_path, 'r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                # Convert price to float
+                if 'price' in row:
+                    row['price'] = float(row['price'])
+                menu_items.append(row)
+                
+        return jsonify({'success': True, 'menu': menu_items})
+    except Exception as e:
+        print(f"Error loading menu: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/api/save_menu', methods=['POST'])
+def save_menu():
+    try:
+        data = request.json
+        menu_items = data.get('menu_items')
+        
+        if not menu_items:
+            return jsonify({'success': False, 'message': 'No menu items provided'})
+        
+        # Get the field names from the first item
+        fieldnames = list(menu_items[0].keys())
+        
+        # Write to the menu.csv file
+        with open('data/menu.csv', 'w', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(menu_items)
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+
+
 @app.route("/manager")
 def manager():
     return render_template("manager_index.html")
@@ -581,6 +631,9 @@ def cook():
 def waiter():
     return render_template("waiter_index.html")
 
+@app.route('/menu/edit')
+def menu_edit():
+    return render_template('menu_edit.html')
 
 @app.route("/index")
 def index():
