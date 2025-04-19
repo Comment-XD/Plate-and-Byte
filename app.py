@@ -689,7 +689,62 @@ def clock_in_out():
 
     return render_template('clock.html', employee_id=employee_id)
 
-#Workload will allows managers to see the time clock and edit in an excel file
+#### Workload will allows managers to see the time clock and edit in an excel file
+
+@app.route('/workload')
+def workload():
+    if 'username' not in session or session.get('position') != 'Manager':
+        flash("Access restricted to managers only.", "error")
+        return redirect('/')
+
+    # Load employee names
+    employees = {}
+    emp_path = os.path.join(os.path.dirname(__file__), 'data', 'employee.csv')
+    with open(emp_path, mode='r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            employees[int(row['id'])] = row['username']
+
+    # Load time punches
+    punches = {}
+    time_path = os.path.join(os.path.dirname(__file__), 'data', 'employee_time.csv')
+    with open(time_path, mode='r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            emp_id = int(row['employee_id'])
+            action = row['action']
+            timestamp = datetime.strptime(row['timestamp'], "%Y-%m-%d %H:%M:%S")
+
+            if emp_id not in punches:
+                punches[emp_id] = []
+
+            punches[emp_id].append((action, timestamp))
+
+    # Calculate total time
+    summary = {}
+    detailed_logs = []
+    for emp_id, logs in punches.items():
+        logs.sort(key=lambda x: x[1])
+        total_time = 0
+        i = 0
+        while i < len(logs) - 1:
+            if logs[i][0] == 'in' and logs[i+1][0] == 'out':
+                duration = (logs[i+1][1] - logs[i][1]).total_seconds() / 3600
+                total_time += duration
+                detailed_logs.append({
+                    'username': employees.get(emp_id, f"ID {emp_id}"),
+                    'clock_in': logs[i][1],
+                    'clock_out': logs[i+1][1],
+                    'hours': round(duration, 2)
+                })
+                i += 2
+            else:
+                i += 1
+
+        summary[employees.get(emp_id, f"ID {emp_id}")] = round(total_time, 2)
+
+    return render_template("workload.html", summary=summary, logs=detailed_logs)
+
 @app.route('/export_workload')
 def export_workload():
     if 'username' not in session or session.get('position') != 'Manager':
