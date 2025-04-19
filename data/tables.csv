@@ -13,7 +13,7 @@ table_id,status,waiter_id
 12,Occupied,
 13,Avaliable,
 14,Available,
-15,Avaliable,
+15,Dirty,2
 16,Avaliable,
 17,Avaliable,
 18,Available,

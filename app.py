@@ -653,7 +653,7 @@ def clock_in_out():
     username = session['username']
     employee_id = None
 
-    # ✅ Use employee.csv to look up ID
+    # Use employee.csv to look up ID
     employee_path = os.path.join(os.path.dirname(__file__), 'data', 'employee.csv')
     try:
         with open(employee_path, mode='r') as file:
@@ -674,7 +674,7 @@ def clock_in_out():
         action = request.form['action']  # 'in' or 'out'
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        # ✅ Append to employee_time.csv at the end
+        # Append to employee_time.csv at the end
         time_log_path = os.path.join(os.path.dirname(__file__), 'data', 'employee_time.csv')
         file_exists = os.path.isfile(time_log_path)
 
@@ -707,7 +707,7 @@ def workload():
     with open(time_path, mode='r') as file:
         reader = csv.DictReader(file)
         for row in reader:
-            emp_id = int(row['id'])  # ✅ Changed from 'employee_id' to 'id'
+            emp_id = int(row['id'])
             action = row['action']
             timestamp = datetime.strptime(row['timestamp'], "%Y-%m-%d %H:%M:%S")
 
@@ -852,7 +852,7 @@ def manager():
 
 @app.route("/cook")
 def cook():
-    return render_template("cook_index.html")
+    return render_template("cookqueue.html")
 
 @app.route("/waiter")
 def waiter():
