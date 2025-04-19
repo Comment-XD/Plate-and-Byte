@@ -1,4 +1,4 @@
-id, username, clock_in_time, clock_out_time, date
+id,username,action,timestamp
 1,bchen,in,2025-04-19 00:25:44
 1,bchen,out,2025-04-19 00:25:46
 1,bchen,in,2025-04-19 00:59:25

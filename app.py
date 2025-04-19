@@ -693,10 +693,6 @@ def clock_in_out():
 
 @app.route('/workload')
 def workload():
-    if 'username' not in session or session.get('position') != 'Manager':
-        flash("Access restricted to managers only.", "error")
-        return redirect('/')
-
     # Load employee names
     employees = {}
     emp_path = os.path.join(os.path.dirname(__file__), 'data', 'employee.csv')
@@ -711,7 +707,7 @@ def workload():
     with open(time_path, mode='r') as file:
         reader = csv.DictReader(file)
         for row in reader:
-            emp_id = int(row['employee_id'])
+            emp_id = int(row['id'])  # ✅ Changed from 'employee_id' to 'id'
             action = row['action']
             timestamp = datetime.strptime(row['timestamp'], "%Y-%m-%d %H:%M:%S")
 
@@ -720,9 +716,10 @@ def workload():
 
             punches[emp_id].append((action, timestamp))
 
-    # Calculate total time
+    # Calculate total time worked and prepare logs
     summary = {}
     detailed_logs = []
+
     for emp_id, logs in punches.items():
         logs.sort(key=lambda x: x[1])
         total_time = 0
@@ -739,11 +736,13 @@ def workload():
                 })
                 i += 2
             else:
-                i += 1
+                i += 1  # skip mismatched or incomplete pairs
 
         summary[employees.get(emp_id, f"ID {emp_id}")] = round(total_time, 2)
 
     return render_template("workload.html", summary=summary, logs=detailed_logs)
+
+
 
 @app.route('/export_workload')
 def export_workload():

@@ -1,6 +1,6 @@
 table_id,status,waiter_id
 1,Available,2
-2,Dirty,
+2,Dirty,2
 3,Dirty,
 4,Available,2
 5,Occupied,
