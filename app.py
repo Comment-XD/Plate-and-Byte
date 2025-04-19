@@ -746,9 +746,7 @@ def workload():
 
 @app.route('/export_workload')
 def export_workload():
-    if 'username' not in session or session.get('position') != 'Manager':
-        flash("Only managers can export workload data.", "error")
-        return redirect('/')
+
 
     # Paths
     csv_path = os.path.join(os.path.dirname(__file__), 'data', 'employee_time.csv')
