@@ -2,3 +2,7 @@ id,username,name,password,role
 1,bchen,Branden Chen,1234,Manager
 2,jcharles,James Charles,1234,Waiter
 3,dodumade,David Odumade,1234,Cook
+4,tstark,Tony Stark,1234,Cook
+5,bdylan,Bob Dylan,1234,Waiter
+6,maplier,Mark aPlier,1234,Waiter
+7,gramesy,Gordon Ramesy,1234,Cook
