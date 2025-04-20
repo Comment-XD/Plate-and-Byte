@@ -1,5 +1,4 @@
 # Plate and Byte Restaurant Planner for J's Restaurant
-***
 
 ### Current Components Implemented
 ***
