@@ -1,4 +1,6 @@
 import traceback
+import webbrowser
+from threading import Timer
 
 from flask import (
     Flask,
@@ -18,6 +20,7 @@ import numpy as np
 
 import csv
 import os
+import sys
 
 from src.utils.employee_factory import create_manager, create_cook, create_waiter
 from src.Restaurant import Restaurant
@@ -25,7 +28,7 @@ from src.Restaurant import Restaurant
 USER_CSV_PATH = "data/employee.csv"
 
 def check_role(username, password):
-    user_df = pd.read_csv(USER_CSV_PATH, index_col=0)
+    user_df = pd.read_csv((USER_CSV_PATH), index_col=0)
     if ((user_df.username == username) & (user_df.password == int(password))).any(): 
         role = user_df.loc[(user_df.username == username) & (user_df.password == int(password))].role.values[0]
         return role
@@ -34,23 +37,23 @@ def check_role(username, password):
 
 
 def check_credential(username, password):
-    user_df = pd.read_csv(USER_CSV_PATH, index_col=0)
+    user_df = pd.read_csv((USER_CSV_PATH), index_col=0)
     if ((user_df.username == username) & (user_df.password == int(password))).any(): 
         return True
     
     return False
 
 def add_user(username, password, role="waiter"):
-    user_df = pd.read_csv(USER_CSV_PATH)
+    user_df = pd.read_csv((USER_CSV_PATH))
     user_id = user_df["id"].iloc[-1] + 1 if not user_df.empty else 1
-    with open(USER_CSV_PATH, mode="a", newline="\n") as file:
+    with open((USER_CSV_PATH), mode="a", newline="\n") as file:
         
         writer = csv.writer(file)
         writer.writerow([user_id, username, password, role])
 
 def write_order_to_csv(table_id, order_items, path="data/orders.csv"):
     fieldnames = ["table_id", "food_item", "price", "total_quantity", "total_price"]
-    with open(path, mode="a", newline='') as csvfile:
+    with open((path), mode="a", newline='') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         for item in order_items:
             writer.writerow({
@@ -62,7 +65,7 @@ def write_order_to_csv(table_id, order_items, path="data/orders.csv"):
             })
 
 def user_exists(username):
-    user_df = pd.read_csv(USER_CSV_PATH)
+    user_df = pd.read_csv((USER_CSV_PATH))
     if (user_df["username"] == username).any():
         return True
     
@@ -143,7 +146,7 @@ def add_employee_web():
 
         employee_file_path = os.path.join('data', 'employee.csv')
         if os.path.exists(employee_file_path):
-            with open(employee_file_path, mode='r', newline='') as emp_csv:
+            with open((employee_file_path), mode='r', newline='') as emp_csv:
                 employee_reader = csv.DictReader(emp_csv)
                 for row in employee_reader:
                     if row['username'] == username:
@@ -174,7 +177,7 @@ def view_employees():
     employees = []
 
     if os.path.isfile(employee_file_path):
-        with open(employee_file_path, mode='r', newline='') as emp_csv:
+        with open((employee_file_path), mode='r', newline='') as emp_csv:
             employee_reader = csv.DictReader(emp_csv)
             for row in employee_reader:
                 employees.append({
@@ -196,7 +199,7 @@ def view_employee(employee_id):
     selected_employee = None
 
     if os.path.isfile(employee_file_path):
-        with open(employee_file_path, mode='r', newline='') as emp_csv:
+        with open((employee_file_path), mode='r', newline='') as emp_csv:
             employee_reader = csv.DictReader(emp_csv)
             for row in employee_reader:
                 if int(row['id']) == employee_id:
@@ -217,7 +220,7 @@ def edit_employee(employee_id):
     employees = []
 
     if os.path.isfile(employee_file_path):
-        with open(employee_file_path, mode='r', newline='') as emp_csv:
+        with open((employee_file_path), mode='r', newline='') as emp_csv:
             employee_reader = csv.DictReader(emp_csv)
             employees = list(employee_reader)
 
@@ -238,7 +241,7 @@ def edit_employee(employee_id):
         employee_to_edit['role'] = request.form.get('role')
 
         # Save updated list
-        with open(employee_file_path, mode='w', newline='') as emp_csv:
+        with open((employee_file_path), mode='w', newline='') as emp_csv:
             fieldnames = ['id', 'username', 'name', 'password', 'role']
             writer = csv.DictWriter(emp_csv, fieldnames=fieldnames)
             writer.writeheader()
@@ -259,16 +262,16 @@ def delete_employee(employee_id):
     waiters_file_path = os.path.join('data', 'waiters.csv')
     employee_file_path = os.path.join('data', 'employee.csv')
 
-    employee_df = pd.read_csv(employee_file_path, index_col=0)
+    employee_df = pd.read_csv((employee_file_path), index_col=0)
     
     current_employees = employee_df[employee_df.index != employee_id]
-    current_employees.to_csv(employee_file_path)
+    current_employees.to_csv((employee_file_path))
     
     removed_employee_role = employee_df[employee_df.index == employee_id].role.item()
     
     if removed_employee_role.lower() == "waiter":
-        waiter_df = pd.read_csv(waiters_file_path, index_col=0)
-        tables_df = pd.read_csv(tables_file_path, index_col=0)
+        waiter_df = pd.read_csv((waiters_file_path), index_col=0)
+        tables_df = pd.read_csv((tables_file_path), index_col=0)
         
         current_waiters = waiter_df[waiter_df.index != employee_id]
         current_waiters.to_csv(waiters_file_path)
@@ -866,6 +869,5 @@ def menu_edit():
 def index():
     return render_template("index.html")
 
-
 if __name__ == "__main__":
-    app.run(debug=True, port=8000)
+    app.run(debug=True, port=5000)
